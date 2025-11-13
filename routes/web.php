@@ -2,7 +2,8 @@
 
 use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
-
+use App\Http\Controllers\ConsultationController;
+use App\Http\Controllers\PatientController;
 Route::get('/', function () {
     return redirect('/login');
 });
@@ -35,7 +36,16 @@ Route::get('/petugas/pendaftaran', fn() => view('petugas.pendaftaran'))->middlew
 Route::get('/petugas/obat', fn() => view('petugas.obat'))->middleware('auth')->name('petugas.obat');
 Route::get('/petugas/resep', fn() => view('petugas.resep'))->middleware('auth')->name('petugas.resep');
 
-Route::get('/pasien/dashboard', fn() => view('pasien.dashboard'))->middleware('auth')->name('pasien.dashboard');
-Route::get('/pasien/konsultasi', fn() => view('pasien.konsultasi'))->middleware('auth')->name('pasien.konsultasi');
-Route::get('/pasien/rekam_medis', fn() => view('pasien.rekam_medis'))->middleware('auth')->name('pasien.rekam_medis');
-Route::get('/pasien/profil', fn() => view('pasien.profil'))->middleware('auth')->name('pasien.profil');
+Route::middleware(['auth'])->prefix('pasien')->name('pasien.')->group(function () {
+    Route::get('/dashboard', [PatientController::class, 'dashboard'])->name('dashboard');
+
+    Route::get('/rekam_medis', [PatientController::class, 'medicalRecord'])->name('rekam_medis');
+    
+    Route::get('/profil', [PatientController::class, 'profile'])->name('profil');
+    Route::post('/profil', [PatientController::class, 'storeProfile'])->name('profil.store');
+
+    Route::get('/konsultasi', [ConsultationController::class, 'index'])->name('konsultasi');
+    Route::post('/konsultasi/tatap-muka', [ConsultationController::class, 'storeTatapMuka'])->name('konsultasi.store.tm');
+    Route::post('/konsultasi/online', [ConsultationController::class, 'storeOnline'])->name('konsultasi.store.online');
+    
+});
