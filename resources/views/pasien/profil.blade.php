@@ -6,7 +6,6 @@
 
     <div class="space-y-6 max-w-5xl mx-auto py-8 px-4">
         
-        <!-- Pesan Status & Error -->
         @if (session('success'))
             <div class="bg-gradient-to-r from-green-50 to-emerald-50 p-4 rounded-2xl shadow-lg border-l-4 border-green-500 animate-fade-in">
                 <div class="flex items-center">
@@ -19,7 +18,7 @@
             <div class="bg-gradient-to-r from-red-50 to-pink-50 p-4 rounded-2xl shadow-lg border-l-4 border-red-500 animate-fade-in">
                 <div class="flex items-center">
                     <i class="bi bi-exclamation-triangle-fill text-red-500 text-2xl mr-3"></i>
-                    <p class="font-semibold text-red-800">{{ session('error') }}</p>
+                    <p class="font-semibold text-red-800">Peringatan: {{ session('error') }}</p>
                 </div>
             </div>
         @endif
@@ -32,7 +31,6 @@
             </div>
         @endif
 
-        <!-- Header Halaman -->
         <header class="bg-gradient-to-br from-indigo-600 to-purple-600 p-8 rounded-3xl shadow-2xl text-white relative overflow-hidden">
             <div class="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full -mr-32 -mt-32"></div>
             <div class="absolute bottom-0 left-0 w-48 h-48 bg-white opacity-5 rounded-full -ml-24 -mb-24"></div>
@@ -49,10 +47,8 @@
             </div>
         </header>
 
-        <!-- Konten Utama: Tabs Data Diri dan Data Kesehatan -->
         <div x-data="{ activeTab: 'data_diri' }" class="bg-white shadow-2xl rounded-3xl border border-gray-100 overflow-hidden">
             
-            <!-- Tab Navigation -->
             <div class="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
                 <nav class="flex space-x-2 p-6" aria-label="Tabs">
                     <button type="button" @click="activeTab = 'data_diri'" 
@@ -74,10 +70,8 @@
                 <form action="{{ route('pasien.profil.store') }}" method="POST" class="space-y-8">
                     @csrf
                     
-                    <!-- 1. TAB: Data Diri & Kontak -->
                     <div x-show="activeTab === 'data_diri'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform scale-95" x-transition:enter-end="opacity-100 transform scale-100">
                         
-                        <!-- Section: Informasi Akun -->
                         <div class="mb-8">
                             <div class="flex items-center mb-4">
                                 <div class="bg-indigo-100 p-2 rounded-xl mr-3">
@@ -112,7 +106,6 @@
                             </div>
                         </div>
 
-                        <!-- Section: Identitas Pribadi -->
                         <div class="mb-8">
                             <div class="flex items-center mb-4">
                                 <div class="bg-blue-100 p-2 rounded-xl mr-3">
@@ -194,7 +187,6 @@
                             </div>
                         </div>
 
-                        <!-- Section: Informasi Kontak -->
                         <div>
                             <div class="flex items-center mb-4">
                                 <div class="bg-green-100 p-2 rounded-xl mr-3">
@@ -240,10 +232,8 @@
                     </div>
 
                     
-                    <!-- 2. TAB: Data Kesehatan Dasar -->
                     <div x-show="activeTab === 'data_kesehatan'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform scale-95" x-transition:enter-end="opacity-100 transform scale-100">
 
-                        <!-- Section: Status Kesehatan -->
                         <div class="mb-8">
                             <div class="flex items-center mb-4">
                                 <div class="bg-red-100 p-2 rounded-xl mr-3">
@@ -277,7 +267,6 @@
                             </div>
                         </div>
 
-                        <!-- Section: Riwayat Penyakit -->
                         <div class="mb-8">
                             <div class="flex items-center mb-4">
                                 <div class="bg-orange-100 p-2 rounded-xl mr-3">
@@ -286,23 +275,23 @@
                                 <h3 class="text-xl font-bold text-gray-800">Riwayat Penyakit Kronis</h3>
                             </div>
                             <div class="group">
-                                <label for="catatan_kronis" class="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                                <label for="riwayat_kronis" class="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
                                     <i class="bi bi-journal-medical text-orange-500 mr-2"></i>
                                     Catatan Penyakit Kronis/Penting
                                 </label>
-                                <textarea name="catatan_kronis" id="catatan_kronis" rows="4" 
+                                {{-- MEMUAT DATA DARI FIELD riwayat_kronis --}}
+                                <textarea name="riwayat_kronis" id="riwayat_kronis" rows="4" 
                                     placeholder="Contoh: Diabetes Tipe 2 sejak 2020, Riwayat operasi usus buntu 2018."
-                                    class="w-full p-4 border-2 border-gray-300 rounded-xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 transition-all duration-300 hover:border-indigo-400 resize-none"></textarea>
+                                    class="w-full p-4 border-2 border-gray-300 rounded-xl focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 transition-all duration-300 hover:border-indigo-400 resize-none">{{ old('riwayat_kronis', $patient->riwayat_kronis ?? '') }}</textarea>
                                 <div class="mt-3 bg-blue-50 border-l-4 border-blue-400 p-4 rounded-r-xl">
                                     <p class="text-sm text-blue-800 flex items-start">
                                         <i class="bi bi-info-circle-fill mr-2 mt-0.5 flex-shrink-0"></i>
-                                        <span>Catatan: Untuk riwayat kronis dan alergi, data ini harus disimpan di tabel riwayat terpisah untuk akurasi rekam medis.</span>
+                                        <span>Catatan: Data ini tersimpan di field `riwayat_kronis` di tabel patients.</span>
                                     </p>
                                 </div>
                             </div>
                         </div>
                         
-                        <!-- Section: Riwayat Alergi -->
                         <div>
                             <div class="flex items-center mb-4">
                                 <div class="bg-red-100 p-2 rounded-xl mr-3">
@@ -311,17 +300,18 @@
                                 <h3 class="text-xl font-bold text-gray-800">Riwayat Alergi</h3>
                             </div>
                             <div class="group">
-                                <label for="alergi_obat" class="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                                <label for="riwayat_alergi" class="block text-sm font-semibold text-gray-700 mb-2 flex items-center">
                                     <i class="bi bi-capsule text-red-500 mr-2"></i>
                                     Daftar Obat/Makanan yang Menyebabkan Alergi
                                 </label>
-                                <textarea name="alergi_obat" id="alergi_obat" rows="4" 
+                                {{-- MEMUAT DATA DARI FIELD riwayat_alergi --}}
+                                <textarea name="riwayat_alergi" id="riwayat_alergi" rows="4" 
                                     placeholder="Contoh: Amoxicillin (reaksi ruam), Udang (gatal-gatal)"
-                                    class="w-full p-4 border-2 border-red-300 rounded-xl focus:ring-4 focus:ring-red-100 focus:border-red-500 transition-all duration-300 hover:border-red-400 resize-none bg-red-50"></textarea>
+                                    class="w-full p-4 border-2 border-red-300 rounded-xl focus:ring-4 focus:ring-red-100 focus:border-red-500 transition-all duration-300 hover:border-red-400 resize-none bg-red-50">{{ old('riwayat_alergi', $patient->riwayat_alergi ?? '') }}</textarea>
                                 <div class="mt-3 bg-red-100 border-l-4 border-red-500 p-4 rounded-r-xl">
                                     <p class="text-sm text-red-800 font-semibold flex items-start">
                                         <i class="bi bi-exclamation-octagon-fill mr-2 mt-0.5 flex-shrink-0 text-lg"></i>
-                                        <span>INFORMASI INI SANGAT PENTING! Harap informasikan langsung kepada Dokter saat konsultasi.</span>
+                                        <span>INFORMASI INI SANGAT PENTING! Data ini tersimpan di field `riwayat_alergi` di tabel patients.</span>
                                     </p>
                                 </div>
                             </div>

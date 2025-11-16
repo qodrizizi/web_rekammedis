@@ -28,6 +28,8 @@ class Patient extends Model
         'jenis_kelamin',
         'gol_darah',
         'no_hp',
+        'riwayat_alergi',
+        'riwayat_kronis',
     ];
 
     /**

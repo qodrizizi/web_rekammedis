@@ -4,6 +4,11 @@ use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ConsultationController;
 use App\Http\Controllers\PatientController;
+use App\Http\Controllers\MedicationController;
+use App\Http\Controllers\PasienController;
+use App\Http\Controllers\DokterController;
+use App\Http\Controllers\RekamMedisController;
+
 Route::get('/', function () {
     return redirect('/login');
 });
@@ -18,11 +23,51 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 // Dashboard masing-masing role
 Route::get('/admin/dashboard', fn() => view('admin.dashboard'))->middleware('auth')->name('admin.dashboard');
-Route::get('/admin/pasien', fn() => view('admin.pasien'))->middleware('auth')->name('admin.pasien');
-Route::get('/admin/rekam_medis', fn() => view('admin.rekam_medis'))->middleware('auth')->name('admin.rekam_medis');
+Route::resource('admin/pasien', PasienController::class)->names([
+    'index' => 'admin.pasien',
+    'create' => 'admin.pasien.create',
+    'store' => 'admin.pasien.store',
+    'show' => 'admin.pasien.show',
+    'edit' => 'admin.pasien.edit',
+    'update' => 'admin.pasien.update',
+    'destroy' => 'admin.pasien.destroy',
+]);
+Route::resource('admin/rekam_medis', RekamMedisController::class)->names([
+    'index' => 'admin.rekam_medis',
+    'store' => 'admin.rekam_medis.store',
+    'update' => 'admin.rekam_medis.update',
+    'destroy' => 'admin.rekam_medis.destroy',
+])->parameters([
+    'rekam-medis' => 'rekam_medi' // Custom parameter name agar cocok dengan Controller
+])->except(['create', 'show', 'edit']);
+
 Route::get('/admin/pendaftaran', fn() => view('admin.pendaftaran'))->middleware('auth')->name('admin.pendaftaran');
-Route::get('/admin/dokter', fn() => view('admin.dokter'))->middleware('auth')->name('admin.dokter');
-Route::get('/admin/obat', fn() => view('admin.obat'))->middleware('auth')->name('admin.obat');
+Route::resource('admin/dokter', DokterController::class)->names([
+    'index' => 'admin.dokter',
+    'store' => 'admin.dokter.store',
+    'update' => 'admin.dokter.update',
+    'destroy' => 'admin.dokter.destroy',
+])->except(['create', 'show', 'edit']); 
+// READ (Index)
+Route::get('/admin/obat', [MedicationController::class, 'index'])
+    ->middleware('auth')
+    ->name('admin.obat');
+
+// CREATE (Store)
+Route::post('/admin/obat', [MedicationController::class, 'store'])
+    ->middleware('auth')
+    ->name('admin.obat.store');
+
+// UPDATE (Update)
+Route::put('/admin/obat/{medication}', [MedicationController::class, 'update'])
+    ->middleware('auth')
+    ->name('admin.obat.update');
+    
+// DELETE (Destroy)
+Route::delete('/admin/obat/{medication}', [MedicationController::class, 'destroy'])
+    ->middleware('auth')
+    ->name('admin.obat.destroy');
+
 Route::get('/admin/laporan', fn() => view('admin.laporan'))->middleware('auth')->name('admin.laporan');
 
 Route::get('/dokter/dashboard', fn() => view('dokter.dashboard'))->middleware('auth')->name('dokter.dashboard');
