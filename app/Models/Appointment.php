@@ -1,4 +1,5 @@
 <?php
+// app/Models/Appointment.php
 
 namespace App\Models;
 
@@ -8,22 +9,35 @@ use Illuminate\Database\Eloquent\Model;
 class Appointment extends Model
 {
     use HasFactory;
-
+    
     protected $table = 'appointments';
 
     protected $fillable = [
-        'patient_id', // Asumsi ID pasien diambil dari user yang login
-        'doctor_id',
-        'clinic_id',
+        'patient_id', 
+        'doctor_id', 
+        'clinic_id', 
         'tanggal_kunjungan',
         'jam_kunjungan',
-        'status', // Default 'menunggu'
+        'status', // enum('menunggu','disetujui','selesai','batal')
         'keluhan',
     ];
 
-    // Casts
     protected $casts = [
         'tanggal_kunjungan' => 'date',
-        'jam_kunjungan' => 'datetime:H:i:s', // Bisa disesuaikan
     ];
+
+    public function patient()
+    {
+        return $this->belongsTo(Patient::class, 'patient_id');
+    }
+
+    public function doctor()
+    {
+        return $this->belongsTo(Doctor::class, 'doctor_id');
+    }
+
+    public function clinic()
+    {
+        return $this->belongsTo(Clinic::class, 'clinic_id');
+    }
 }
