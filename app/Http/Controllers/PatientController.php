@@ -15,31 +15,33 @@ class PatientController extends Controller
      */
     public function dashboard()
     {
-        $user = Auth::user(); // Tambahkan user di sini
+        $user = Auth::user(); 
         $patient = null;
         $latestAppointment = null; 
         
-        // 1. Ambil data Patient, termasuk field riwayat_alergi
+        // Inisialisasi default sebagai Collection kosong agar tidak error saat di-cek ->isNotEmpty()
+        $latestRecords = collect(); 
+        
+        // 1. Ambil data Patient
         $patient = Patient::where('user_id', Auth::id())->first();
 
-        // 2. Tentukan status alergi di luar if
-        $alergiTercatat = false; // Default: Tidak ada alergi
+        // 2. Tentukan status alergi
+        $alergiTercatat = false;
         
-        // 3. Ambil ringkasan data penting untuk dashboard (Inisialisasi)
+        // 3. Inisialisasi summary
         $summary = [
             'active_appointments' => 0,
             'total_medical_records' => 0,
         ];
 
         if ($patient) {
-            // Cek apakah field riwayat_alergi memiliki isi (string non-empty)
             if (!empty($patient->riwayat_alergi)) {
                 $alergiTercatat = true;
             }
 
             $summary['active_appointments'] = Appointment::where('patient_id', $patient->id)
-                                                     ->whereIn('status', ['menunggu', 'disetujui'])
-                                                     ->count();
+                                                    ->whereIn('status', ['menunggu', 'disetujui'])
+                                                    ->count();
             
             $summary['total_medical_records'] = MedicalRecord::where('patient_id', $patient->id)->count();
             
@@ -50,10 +52,18 @@ class PatientController extends Controller
                                                 ->orderBy('jam_kunjungan')
                                                 ->with('doctor.user', 'clinic')
                                                 ->first();
+
+            // --- TAMBAHAN CODE DI SINI (FIX) ---
+            // Ambil 3 atau 5 rekam medis terakhir
+            $latestRecords = MedicalRecord::where('patient_id', $patient->id)
+                                        ->with('doctor.user', 'clinic') // Eager load relasi
+                                        ->orderBy('tanggal_periksa', 'desc')
+                                        ->limit(5) // Batasi hanya 5 data terakhir
+                                        ->get();
         }
 
-        // 4. Kirim variabel baru ($alergiTercatat) ke view
-        return view('pasien.dashboard', compact('summary', 'patient', 'latestAppointment', 'user', 'alergiTercatat'));
+        // 4. Masukkan 'latestRecords' ke dalam compact
+        return view('pasien.dashboard', compact('summary', 'patient', 'latestAppointment', 'user', 'alergiTercatat', 'latestRecords'));
     }
 
     //-----------------------------------------------------------------------------------

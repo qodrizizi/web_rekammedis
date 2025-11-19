@@ -6,6 +6,8 @@
     <title>@yield('title', 'Rekam Medis Puskesmas')</title>
     <link rel="icon" href="{{ asset('assets/iconya.png') }}" type="image/png">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
     <script>
         tailwind.config = {
@@ -128,6 +130,12 @@
                                 <span class="font-medium">Data Pasien</span>
                             </a>
                             
+                            <a href="{{ route('dokter.jadwal') }}" 
+                               class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl hover:bg-white/10 transition-all duration-200 group {{ Request::is('dokter/jadwal*') ? 'bg-white/20' : '' }}">
+                                <i class="bi bi-clock-history text-xl group-hover:scale-110 transition-transform"></i>
+                                <span class="font-medium">Data Jadwal</span>
+                            </a>
+
                             <a href="{{ route('dokter.rekam_medis') }}" 
                                class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl hover:bg-white/10 transition-all duration-200 group {{ Request::is('dokter/rekam_medis*') ? 'bg-white/20' : '' }}">
                                 <i class="bi bi-clipboard2-pulse text-xl group-hover:scale-110 transition-transform"></i>
@@ -214,7 +222,8 @@
                         </div>
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
-                            <button type="submit" class="hover:bg-white/20 p-2 rounded-lg transition-colors">
+                            {{-- Ganti type="submit" jadi type="button" dan tambah onclick --}}
+                            <button type="button" onclick="confirmLogout(this)" class="hover:bg-white/20 p-2 rounded-lg transition-colors">
                                 <i class="bi bi-box-arrow-right"></i>
                             </button>
                         </form>
@@ -244,10 +253,10 @@
                     <div class="flex-1"></div>
 
                     <div class="flex items-center space-x-2">
-                        <button class="relative p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+                        <!-- <button class="relative p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
                             <i class="bi bi-bell text-xl"></i>
                             <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-                        </button>
+                        </button> -->
 
                         {{-- User Dropdown --}}
                         <div class="relative hidden lg:block">
@@ -264,18 +273,19 @@
 
                             {{-- Dropdown Menu --}}
                             <div id="userDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
-                                <a href="#" class="flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">
+                                <!-- <a href="#" class="flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">
                                     <i class="bi bi-person"></i>
                                     <span>Profil</span>
                                 </a>
                                 <a href="#" class="flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">
                                     <i class="bi bi-gear"></i>
                                     <span>Pengaturan</span>
-                                </a>
-                                <hr class="my-2">
+                                </a> -->
+                                <!-- <hr class="my-2"> -->
                                 <form method="POST" action="{{ route('logout') }}">
                                     @csrf
-                                    <button type="submit" class="flex items-center space-x-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors w-full text-left">
+                                    {{-- Ganti type="submit" jadi type="button" dan tambah onclick --}}
+                                    <button type="button" onclick="confirmLogout(this)" class="flex items-center space-x-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors w-full text-left">
                                         <i class="bi bi-box-arrow-right"></i>
                                         <span>Logout</span>
                                     </button>
@@ -379,6 +389,28 @@
                 }
             });
         }
+
+        function confirmLogout(button) {
+        // Cari form terdekat dari tombol yang diklik
+        const form = button.closest('form');
+
+        Swal.fire({
+            title: 'Yakin ingin keluar?',
+            text: "Sesi Anda akan berakhir.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#0ea5e9', // Warna primary (sesuai tema anda)
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Ya',
+            cancelButtonText: 'Batal',
+            reverseButtons: true // Posisi tombol dibalik agar 'Batal' di kiri
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Jika user klik Ya, submit form secara manual
+                form.submit();
+            }
+        });
+    }
     </script>
 </body>
 </html>

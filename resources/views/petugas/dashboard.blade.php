@@ -1,158 +1,181 @@
 @extends('layouts.app')
 
-@section('title', 'Dashboard Petugas Pendaftaran')
+@section('title', 'Dashboard Farmasi')
 
 @section('content')
 
-<div class="space-y-8">
+<div class="space-y-8 pb-12">
     
-    <header class="bg-white p-6 rounded-2xl shadow-xl border-l-8 border-yellow-500 transition duration-300 transform hover:scale-[1.005] hover:shadow-2xl">
-        <h1 class="text-4xl font-extrabold text-gray-800 flex items-center">
-            <i class="bi bi-person-badge-fill text-yellow-600 mr-3"></i> Dashboard Petugas Pendaftaran
-        </h1>
-        <p class="text-lg text-gray-600 mt-2">
-            Selamat datang kembali, **Petugas Rina**! 
-            Fokus Anda hari ini adalah kelancaran alur pendaftaran pasien.
-        </p>
+    {{-- HEADER --}}
+    <header class="bg-white p-6 rounded-2xl shadow-xl border-l-8 border-teal-500 transition duration-300 hover:shadow-2xl relative overflow-hidden">
+        <div class="relative z-10">
+            <h1 class="text-3xl font-extrabold text-gray-800 flex items-center">
+                <i class="bi bi-prescription2 text-teal-600 mr-3"></i> Dashboard Farmasi & Obat
+            </h1>
+            <p class="text-gray-600 mt-2">
+                Halo, <span class="font-bold text-gray-800">{{ auth()->user()->name }}</span>. 
+                Pantau stok obat dan selesaikan antrian resep dengan teliti.
+            </p>
+        </div>
+        {{-- Dekorasi Background --}}
+        <div class="absolute right-0 top-0 -mt-4 -mr-4 opacity-10">
+            <i class="bi bi-capsule text-9xl text-teal-600"></i>
+        </div>
     </header>
 
+    {{-- STATS CARDS --}}
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
 
-        <div class="bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition duration-300 flex items-center justify-between border border-gray-100">
-            <div>
-                <p class="text-sm font-medium text-gray-500">Total Pasien Terdaftar</p>
-                <p class="text-3xl font-bold text-gray-900 mt-1">1,250</p>
+        {{-- Card 1: Resep Menunggu (Paling Penting - Merah) --}}
+        <div class="bg-white p-6 rounded-2xl shadow-md border-b-4 border-red-500 hover:-translate-y-1 transition duration-300">
+            <div class="flex justify-between items-start">
+                <div>
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Resep Menunggu</p>
+                    <p class="text-4xl font-extrabold text-gray-800 mt-1">{{ $stats['resep_pending'] }}</p>
+                </div>
+                <div class="bg-red-50 p-3 rounded-xl text-red-500">
+                    <i class="bi bi-hourglass-split text-2xl"></i>
+                </div>
             </div>
-            <div class="bg-primary/10 p-3 rounded-xl text-primary flex items-center justify-center">
-                <i class="bi bi-people-fill text-3xl"></i>
-            </div>
+            <p class="text-xs text-red-500 mt-3 font-medium">Perlu segera disiapkan!</p>
         </div>
 
-        <div class="bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition duration-300 flex items-center justify-between border border-gray-100">
-            <div>
-                <p class="text-sm font-medium text-gray-500">Antrian Hari Ini</p>
-                <p class="text-3xl font-bold text-red-600 mt-1">12</p>
+        {{-- Card 2: Stok Kritis (Warning - Orange) --}}
+        <div class="bg-white p-6 rounded-2xl shadow-md border-b-4 border-orange-500 hover:-translate-y-1 transition duration-300">
+            <div class="flex justify-between items-start">
+                <div>
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Stok Obat Kritis</p>
+                    <p class="text-4xl font-extrabold text-gray-800 mt-1">{{ $stats['stok_kritis'] }}</p>
+                </div>
+                <div class="bg-orange-50 p-3 rounded-xl text-orange-500">
+                    <i class="bi bi-exclamation-triangle-fill text-2xl"></i>
+                </div>
             </div>
-            <div class="bg-red-500/10 p-3 rounded-xl text-red-600 flex items-center justify-center">
-                <i class="bi bi-calendar-minus-fill text-3xl"></i>
-            </div>
+            <p class="text-xs text-orange-500 mt-3 font-medium">Segera ajukan pengadaan.</p>
         </div>
 
-        <div class="bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition duration-300 flex items-center justify-between border border-gray-100">
-            <div>
-                <p class="text-sm font-medium text-gray-500">Pasien Baru Terdaftar Hari Ini</p>
-                <p class="text-3xl font-bold text-gray-900 mt-1">4</p>
+        {{-- Card 3: Selesai Hari Ini (Success - Hijau) --}}
+        <div class="bg-white p-6 rounded-2xl shadow-md border-b-4 border-green-500 hover:-translate-y-1 transition duration-300">
+            <div class="flex justify-between items-start">
+                <div>
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Selesai Hari Ini</p>
+                    <p class="text-4xl font-extrabold text-gray-800 mt-1">{{ $stats['resep_selesai_today'] }}</p>
+                </div>
+                <div class="bg-green-50 p-3 rounded-xl text-green-500">
+                    <i class="bi bi-check-circle-fill text-2xl"></i>
+                </div>
             </div>
-            <div class="bg-blue-500/10 p-3 rounded-xl text-blue-600 flex items-center justify-center">
-                <i class="bi bi-person-plus-fill text-3xl"></i>
-            </div>
+            <p class="text-xs text-gray-400 mt-3">Kerja bagus!</p>
         </div>
 
-        <div class="bg-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition duration-300 flex items-center justify-between border border-gray-100">
-            <div>
-                <p class="text-sm font-medium text-gray-500">Verifikasi BPJS Tertunda</p>
-                <p class="text-3xl font-bold text-orange-600 mt-1">3</p>
+        {{-- Card 4: Total Item (Info - Biru) --}}
+        <div class="bg-white p-6 rounded-2xl shadow-md border-b-4 border-blue-500 hover:-translate-y-1 transition duration-300">
+            <div class="flex justify-between items-start">
+                <div>
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Total Jenis Obat</p>
+                    <p class="text-4xl font-extrabold text-gray-800 mt-1">{{ $stats['total_item_obat'] }}</p>
+                </div>
+                <div class="bg-blue-50 p-3 rounded-xl text-blue-500">
+                    <i class="bi bi-box-seam-fill text-2xl"></i>
+                </div>
             </div>
-            <div class="bg-orange-500/10 p-3 rounded-xl text-orange-600 flex items-center justify-center">
-                <i class="bi bi-patch-exclamation-fill text-3xl"></i>
-            </div>
+            <p class="text-xs text-gray-400 mt-3">Terdaftar di database.</p>
         </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
+        {{-- KOLOM KIRI: Antrian Resep --}}
         <div class="lg:col-span-2 space-y-6">
-
-            <div class="bg-white p-6 rounded-2xl shadow-xl border border-gray-100">
-                <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-                    <i class="bi bi-list-ol text-red-600 mr-2"></i> Antrian Kunjungan Aktif Hari Ini
-                </h2>
-                <div class="divide-y divide-gray-200">
-                    
-                    <div class="flex justify-between items-center py-3 border-l-4 border-yellow-500 pl-3">
-                        <div>
-                            <p class="font-semibold text-gray-900">1. Pasien: Budi Santoso</p>
-                            <p class="text-sm text-gray-500">Poli Umum - Dr. Rian</p>
-                        </div>
-                        <span class="text-xs bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full font-medium">Sedang Diperiksa</span>
-                        <button class="text-gray-500 hover:text-gray-700 text-sm font-medium">Lacak &rarr;</button>
-                    </div>
-
-                    <div class="flex justify-between items-center py-3 hover:bg-gray-50 rounded-lg -mx-2 px-2 transition">
-                        <div>
-                            <p class="font-semibold text-gray-900">2. Pasien: Siti Nurhaliza</p>
-                            <p class="text-sm text-gray-500">Poli Gigi - Dr. Amelia</p>
-                        </div>
-                        <span class="text-xs bg-blue-100 text-blue-800 px-3 py-1 rounded-full font-medium">Menunggu Panggilan</span>
-                        <button class="text-primary hover:text-secondary text-sm font-medium">Panggil &rarr;</button>
-                    </div>
-                    
-                    <div class="flex justify-between items-center py-3 hover:bg-gray-50 rounded-lg -mx-2 px-2 transition">
-                        <div>
-                            <p class="font-semibold text-gray-900">3. Pasien: Joko Susilo</p>
-                            <p class="text-sm text-gray-500">Poli Anak - Dr. Santi</p>
-                        </div>
-                        <span class="text-xs bg-green-100 text-green-800 px-3 py-1 rounded-full font-medium">Baru Terdaftar</span>
-                        <button class="text-primary hover:text-secondary text-sm font-medium">Panggil &rarr;</button>
-                    </div>
+            <div class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
+                <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                    <h2 class="text-lg font-bold text-gray-800 flex items-center">
+                        <i class="bi bi-list-task text-teal-600 mr-2"></i> Antrian Resep Prioritas
+                    </h2>
+                    <a href="{{ route('petugas.resep') }}" class="text-sm text-teal-600 font-bold hover:underline">Lihat Semua &rarr;</a>
                 </div>
-                <div class="mt-4 text-center">
-                    <a href="#" class="text-primary hover:text-secondary text-sm font-medium">Lihat Semua Antrian &rarr;</a>
+                
+                <div class="divide-y divide-gray-100">
+                    @forelse($antrianResep as $resep)
+                        <div class="p-4 hover:bg-teal-50/30 transition flex items-center justify-between group">
+                            <div class="flex items-center gap-4">
+                                <div class="w-10 h-10 rounded-full bg-teal-100 flex items-center justify-center text-teal-700 font-bold text-sm">
+                                    {{ substr($resep->patient->user->name, 0, 1) }}
+                                </div>
+                                <div>
+                                    <p class="font-bold text-gray-800 text-sm">{{ $resep->patient->user->name }}</p>
+                                    <p class="text-xs text-gray-500">
+                                        Dokter: {{ $resep->doctor->user->name }} • 
+                                        <span class="text-gray-400">{{ $resep->created_at->diffForHumans() }}</span>
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center gap-3">
+                                @if($resep->status_pengambilan_obat == 'disiapkan')
+                                    <span class="px-3 py-1 rounded-full text-xs font-bold bg-yellow-100 text-yellow-700 animate-pulse">
+                                        Sedang Disiapkan
+                                    </span>
+                                @else
+                                    <span class="px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700">
+                                        Menunggu
+                                    </span>
+                                @endif
+                                
+                                <form action="{{ route('petugas.resep.process', $resep->id) }}" method="POST">
+                                    @csrf
+                                    <button type="submit" class="w-8 h-8 rounded-lg bg-gray-100 hover:bg-teal-600 hover:text-white text-gray-400 flex items-center justify-center transition shadow-sm" title="Proses">
+                                        <i class="bi bi-play-fill"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    @empty
+                        <div class="p-8 text-center">
+                            <div class="inline-block p-4 rounded-full bg-green-50 text-green-500 mb-3">
+                                <i class="bi bi-cup-hot text-3xl"></i>
+                            </div>
+                            <p class="text-gray-800 font-medium">Tidak ada antrian resep.</p>
+                            <p class="text-sm text-gray-500">Anda bisa istirahat sejenak atau cek stok obat.</p>
+                        </div>
+                    @endforelse
                 </div>
-            </div>
-
-            <div class="bg-white p-6 rounded-2xl shadow-xl border border-gray-100">
-                <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-                    <i class="bi bi-speedometer text-blue-600 mr-2"></i> Pendaftaran Pasien Cepat
-                </h2>
-                <form class="space-y-4">
-                    <input type="text" placeholder="Nama Lengkap Pasien" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary">
-                    <input type="text" placeholder="NIK/No. BPJS" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary">
-                    <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary">
-                        <option>Pilih Tujuan Poli</option>
-                        <option>Poli Umum</option>
-                        <option>Poli Gigi</option>
-                        <option>Poli Anak</option>
-                    </select>
-                    <button type="submit" class="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-3 rounded-lg transition-colors duration-300 flex items-center justify-center shadow-md">
-                        <i class="bi bi-file-earmark-plus-fill mr-2"></i> Daftarkan Kunjungan
-                    </button>
-                </form>
             </div>
         </div>
         
+        {{-- KOLOM KANAN: Stok Menipis --}}
         <div class="lg:col-span-1">
-            <div class="bg-white p-6 rounded-2xl shadow-xl border border-gray-100">
-                <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-                    <i class="bi bi-check-square-fill text-green-600 mr-2"></i> Tugas Verifikasi & Notifikasi
-                </h2>
+            <div class="bg-white rounded-2xl shadow-lg border border-red-100 h-full">
+                <div class="p-5 border-b border-red-50 bg-red-50/50">
+                    <h2 class="text-lg font-bold text-gray-800 flex items-center">
+                        <i class="bi bi-bell-fill text-red-500 mr-2 animate-bounce"></i> Stok Obat Menipis
+                    </h2>
+                </div>
                 
-                <ul class="space-y-4">
-                    <li class="flex items-start space-x-3 p-2 bg-red-50 border-l-4 border-red-500 rounded-lg">
-                        <div class="w-2 h-2 bg-red-500 rounded-full mt-2.5 flex-shrink-0"></div>
-                        <div>
-                            <p class="text-sm text-gray-800 font-semibold">Tugas Mendesak: Verifikasi BPJS</p>
-                            <p class="text-xs text-gray-600">3 pasien menunggu verifikasi eligibility BPJS.</p>
-                            <a href="#" class="text-xs text-red-500 hover:text-red-700 font-medium">Lakukan Verifikasi &rarr;</a>
+                <div class="p-4 space-y-3">
+                    @forelse($obatMenipis as $obat)
+                        <div class="flex items-center justify-between p-3 bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md hover:border-red-200 transition">
+                            <div>
+                                <p class="font-bold text-gray-800 text-sm">{{ $obat->nama_obat }}</p>
+                                <p class="text-xs text-gray-500">{{ $obat->kode_obat }}</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-lg font-bold text-red-600">{{ $obat->stok }}</p>
+                                <p class="text-[10px] text-gray-400 uppercase font-bold">{{ $obat->satuan }}</p>
+                            </div>
                         </div>
-                    </li>
-                    <li class="flex items-start space-x-3 p-2 hover:bg-gray-50 rounded-lg">
-                        <div class="w-2 h-2 bg-blue-500 rounded-full mt-2.5 flex-shrink-0"></div>
-                        <div>
-                            <p class="text-sm text-gray-800"><span class="font-semibold">Pasien baru:</span> Rina Dewi sukses didaftarkan.</p>
-                            <p class="text-xs text-gray-500">10 menit yang lalu</p>
+                    @empty
+                        <div class="text-center py-10">
+                            <i class="bi bi-check-circle text-4xl text-green-400 mb-2 block"></i>
+                            <p class="text-sm text-gray-500">Semua stok aman.</p>
                         </div>
-                    </li>
-                    <li class="flex items-start space-x-3 p-2 hover:bg-gray-50 rounded-lg">
-                        <div class="w-2 h-2 bg-primary rounded-full mt-2.5 flex-shrink-0"></div>
-                        <div>
-                            <p class="text-sm text-gray-800"><span class="font-semibold">Tugas:</span> Arsip formulir fisik P1029.</p>
-                            <p class="text-xs text-gray-500">Hari ini</p>
-                        </div>
-                    </li>
-                </ul>
-                <div class="mt-4 text-center">
-                    <a href="#" class="text-primary hover:text-secondary text-sm font-medium">Lihat Semua Tugas &rarr;</a>
+                    @endforelse
+                </div>
+
+                <div class="p-4 border-t border-gray-100 bg-gray-50 rounded-b-2xl text-center">
+                    <a href="{{ route('petugas.obat') }}" class="text-xs font-bold text-gray-500 hover:text-gray-800 uppercase tracking-wider">
+                        Lihat Semua Data Obat
+                    </a>
                 </div>
             </div>
         </div>

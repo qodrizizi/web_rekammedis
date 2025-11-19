@@ -24,6 +24,10 @@ class Doctor extends Model
         return $this->belongsTo(User::class);
     }
     
+    public function medicalRecords()
+    {
+        return $this->hasMany(\App\Models\MedicalRecord::class, 'doctor_id');
+    }
     // Relasi ke appointments (jika diperlukan di masa depan)
     public function appointments()
     {

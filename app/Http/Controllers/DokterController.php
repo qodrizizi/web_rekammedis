@@ -125,4 +125,23 @@ class DokterController extends Controller
 
         return redirect()->route('admin.dokter')->with('success', 'Data dokter berhasil dihapus.');
     }
+    public function showJadwal()
+    {
+        $user = auth()->user();
+        
+        // Ambil data Dokter yang login (asumsi relasi sudah benar)
+        $doctor = Doctor::where('user_id', $user->id)->first();
+
+        // Handle jika data doctor tidak ditemukan
+        if (!$doctor) {
+            return view('dokter.jadwal')->with('error', 'Data Dokter Anda tidak ditemukan. Hubungi Administrator.');
+        }
+
+        // Asumsi 1: Dokter punya relasi ke Clinic/Poliklinik
+        // Asumsi 2: Detail jadwal disimpan dalam kolom 'jadwal_praktek' pada tabel 'doctors'
+        $clinic = $doctor->clinic; // Jika ada relasi ke tabel 'clinics'
+        $jadwalPraktek = $doctor->jadwal_praktek ?? 'Jadwal belum diatur oleh Administrator.'; 
+
+        return view('dokter.jadwal', compact('doctor', 'clinic', 'jadwalPraktek'));
+    }
 }
