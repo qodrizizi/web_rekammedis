@@ -1,204 +1,224 @@
 @extends('layouts.app')
 
-@section('title', 'Pendaftaran Konsultasi & Janji Temu')
+@section('title', 'Pendaftaran Konsultasi')
 
 @section('content')
 
-    <div class="space-y-6 max-w-5xl mx-auto">
+    <div class="space-y-6 max-w-4xl mx-auto">
         
-        <header class="bg-white p-6 rounded-2xl shadow-xl border-l-8 border-indigo-500 border-t border-gray-100">
-            <h1 class="text-3xl font-bold text-gray-800 flex items-center mb-1">
-                <i class="bi bi-calendar-heart-fill text-indigo-600 mr-3"></i> Jadwal Konsultasi
+        {{-- HEADER --}}
+        <header class="bg-white p-6 rounded-2xl shadow-lg border-l-8 border-blue-600">
+            <h1 class="text-2xl font-bold text-gray-800 flex items-center mb-1">
+                <i class="bi bi-hospital text-blue-600 mr-3"></i> Pendaftaran Rawat Jalan
             </h1>
-            <p class="text-lg text-gray-600">Pilih jenis layanan dan dokter untuk konsultasi Anda.</p>
+            <p class="text-gray-600">Silakan isi formulir di bawah untuk membuat janji temu dengan dokter.</p>
         </header>
         
+        {{-- ALERTS --}}
         @if (session('success'))
-            <div class="bg-green-100 p-4 rounded-xl shadow-md border border-green-200 text-green-700">
-                <p class="font-semibold">{{ session('success') }}</p>
+            <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded shadow-sm" role="alert">
+                <p class="font-bold">Berhasil!</p>
+                <p>{{ session('success') }}</p>
             </div>
         @endif
-        @if (session('info'))
-            <div class="bg-blue-100 p-4 rounded-xl shadow-md border border-blue-200 text-blue-700">
-                <p class="font-semibold">{{ session('info') }}</p>
+        @if (session('error'))
+            <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-sm" role="alert">
+                <p class="font-bold">Perhatian!</p>
+                <p>{{ session('error') }}</p>
             </div>
         @endif
 
+        {{-- STATUS JANJI TEMU AKTIF --}}
         @if ($activeAppointment)
-            <div class="bg-indigo-50 p-4 rounded-xl shadow-md border border-indigo-200 flex justify-between items-center">
+            <div class="bg-blue-50 border border-blue-200 rounded-xl p-5 shadow-md flex flex-col sm:flex-row justify-between items-center gap-4">
                 <div>
-                    <p class="font-semibold text-indigo-700">Janji Temu Aktif:</p>
-                    <p class="text-sm text-indigo-600">
-                        Anda memiliki 1 janji pada 
-                        **{{ \Carbon\Carbon::parse($activeAppointment->tanggal_kunjungan)->format('d F Y') }}, 
-                        {{ \Carbon\Carbon::parse($activeAppointment->jam_kunjungan)->format('H:i') }}** dengan Dr. {{ $activeAppointment->doctor->user->name ?? 'N/A' }}. 
-                        (Status: **{{ ucfirst($activeAppointment->status) }}**)
-                    </p>
+                    <h3 class="font-bold text-blue-800 text-lg mb-1"><i class="bi bi-ticket-perforated mr-2"></i>Tiket Antrian Aktif</h3>
+                    <div class="text-sm text-blue-700 space-y-1">
+                        <p><strong>Poli:</strong> {{ $activeAppointment->clinic->nama_poli }}</p>
+                        <p><strong>Dokter:</strong> {{ $activeAppointment->doctor->user->name }}</p>
+                        <p><strong>Waktu:</strong> {{ \Carbon\Carbon::parse($activeAppointment->tanggal_kunjungan)->format('d M Y') }} - {{ $activeAppointment->jam_kunjungan }}</p>
+                        <p><strong>Status:</strong> <span class="uppercase font-bold bg-blue-200 px-2 py-0.5 rounded text-xs">{{ $activeAppointment->status }}</span></p>
+                    </div>
                 </div>
-                <a href="#" class="bg-indigo-500 hover:bg-indigo-600 text-white font-medium py-2 px-4 rounded-lg text-sm transition-colors">
-                    Kelola Janji
-                </a>
+                <button class="px-5 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition shadow disabled:opacity-50" disabled>
+                    Sedang Menunggu
+                </button>
             </div>
         @else
-            <div class="bg-gray-50 p-4 rounded-xl shadow-md border border-gray-200 text-gray-700">
-                <p class="font-semibold">Tidak ada janji temu aktif.</p>
-            </div>
-        @endif
 
-
-        <div x-data="{ activeTab: 'tatap_muka' }" class="bg-white shadow-xl rounded-2xl border border-gray-100">
-            
-            <div class="border-b border-gray-200">
-                <nav class="flex space-x-4 p-4" aria-label="Tabs">
-                    <button @click="activeTab = 'tatap_muka'" 
-                            :class="activeTab === 'tatap_muka' ? 'border-indigo-500 text-indigo-700 bg-indigo-50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'"
-                            class="py-2 px-4 inline-flex items-center font-medium text-sm rounded-xl border-b-2 transition-colors duration-200">
-                        <i class="bi bi-hospital-fill mr-2"></i> Konsultasi Tatap Muka (On-Site)
-                    </button>
-                    <button @click="activeTab = 'online'" 
-                            :class="activeTab === 'online' ? 'border-indigo-500 text-indigo-700 bg-indigo-50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'"
-                            class="py-2 px-4 inline-flex items-center font-medium text-sm rounded-xl border-b-2 transition-colors duration-200">
-                        <i class="bi bi-camera-video-fill mr-2"></i> Konsultasi Online (Telemedis)
-                    </button>
-                </nav>
-            </div>
-
-            <div class="p-6">
-                
-                <div x-show="activeTab === 'tatap_muka'" class="space-y-6">
-                    <h2 class="text-xl font-semibold text-gray-800">Pendaftaran Janji Temu di Klinik</h2>
-                    
-                    {{-- Form Tatap Muka --}}
-                    <form action="{{ route('pasien.konsultasi.store.tm') }}" method="POST" class="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 border border-gray-200 rounded-xl bg-gray-50">
-                        @csrf
-                        
-                        {{-- Poli Tujuan (Diambil dari DB: clinics) --}}
-                        <div>
-                            <label for="poli_tm" class="block text-sm font-medium text-gray-700 mb-1">Poli Tujuan <span class="text-red-500">*</span></label>
-                            <select name="poli_tm" id="poli_tm" required
-                                class="w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition-all @error('poli_tm') border-red-500 @enderror">
-                                <option value="">Pilih Poli</option>
-                                @foreach ($clinics as $clinic)
-                                    <option value="{{ $clinic->id }}" {{ old('poli_tm') == $clinic->id ? 'selected' : '' }}>
-                                        {{ $clinic->nama_poli }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            @error('poli_tm') <p class="text-sm text-red-500 mt-1">{{ $message }}</p> @enderror
-                        </div>
-
-                        {{-- Dokter Pilihan (Diambil dari DB: doctors) --}}
-                        <div>
-                            <label for="dokter_tm" class="block text-sm font-medium text-gray-700 mb-1">Dokter Pilihan</label>
-                            <select name="dokter_tm" id="dokter_tm"
-                                class="w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition-all @error('dokter_tm') border-red-500 @enderror">
-                                <option value="">Pilih Dokter (Opsional)</option>
-                                @foreach ($doctors as $doctor)
-                                    <option value="{{ $doctor->id }}" {{ old('dokter_tm') == $doctor->id ? 'selected' : '' }}>
-                                        Dr. {{ $doctor->user->name ?? 'N/A' }}, {{ $doctor->spesialis }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            @error('dokter_tm') <p class="text-sm text-red-500 mt-1">{{ $message }}</p> @enderror
-                        </div>
-
-                        {{-- Tanggal Kunjungan --}}
-                        <div>
-                            <label for="tgl_tm" class="block text-sm font-medium text-gray-700 mb-1">Tanggal Kunjungan <span class="text-red-500">*</span></label>
-                            <input type="date" name="tgl_tm" id="tgl_tm" required value="{{ old('tgl_tm') }}"
-                                class="w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition-all @error('tgl_tm') border-red-500 @enderror">
-                            @error('tgl_tm') <p class="text-sm text-red-500 mt-1">{{ $message }}</p> @enderror
-                        </div>
-
-                        {{-- Waktu Kunjungan (Slot) (Diambil dari $timeSlots Controller) --}}
-                        <div>
-                            <label for="waktu_tm" class="block text-sm font-medium text-gray-700 mb-1">Waktu Pilihan (Slot Tersedia) <span class="text-red-500">*</span></label>
-                            <select name="waktu_tm" id="waktu_tm" required
-                                class="w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition-all @error('waktu_tm') border-red-500 @enderror">
-                                <option value="">Pilih Slot</option>
-                                @foreach ($timeSlots as $slot)
-                                    <option value="{{ $slot['value'] }}" {{ $slot['disabled'] ? 'disabled' : '' }} {{ old('waktu_tm') == $slot['value'] ? 'selected' : '' }}>
-                                        {{ $slot['label'] }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            @error('waktu_tm') <p class="text-sm text-red-500 mt-1">{{ $message }}</p> @enderror
-                        </div>
-                        
-                        {{-- Keluhan Singkat --}}
-                        <div class="md:col-span-2">
-                            <label for="keluhan_tm" class="block text-sm font-medium text-gray-700 mb-1">Keluhan Singkat</label>
-                            <textarea name="keluhan_tm" id="keluhan_tm" rows="2" placeholder="Contoh: Sakit kepala dan demam ringan sejak 2 hari lalu."
-                                class="w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition-all @error('keluhan_tm') border-red-500 @enderror">{{ old('keluhan_tm') }}</textarea>
-                            @error('keluhan_tm') <p class="text-sm text-red-500 mt-1">{{ $message }}</p> @enderror
-                        </div>
-
-                        {{-- Tombol Submit --}}
-                        <div class="md:col-span-2 pt-4">
-                            <button type="submit" class="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-semibold py-3 rounded-xl transition-colors duration-300 flex items-center justify-center shadow-lg">
-                                <i class="bi bi-calendar-plus-fill mr-2"></i> Ajukan Janji Temu Tatap Muka
-                            </button>
-                        </div>
-                    </form>
+            {{-- FORM PENDAFTARAN --}}
+            <div class="bg-white shadow-xl rounded-2xl border border-gray-100 overflow-hidden">
+                <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
+                    <h2 class="font-semibold text-gray-700">Formulir Janji Temu</h2>
                 </div>
-
                 
-                <div x-show="activeTab === 'online'" class="space-y-6" style="display: none;">
-                    <h2 class="text-xl font-semibold text-gray-800">Pendaftaran Sesi Telemedis</h2>
-                    
-                    {{-- Form Online --}}
-                    <form action="{{ route('pasien.konsultasi.store.online') }}" method="POST" class="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 border border-gray-200 rounded-xl bg-gray-50">
+                <div class="p-6">
+                    <form action="{{ route('pasien.konsultasi.store') }}" method="POST" class="space-y-6">
                         @csrf
                         
-                        {{-- Poli Tujuan Online (Saat ini masih manual sesuai blade awal) --}}
-                        <div>
-                            <label for="poli_online" class="block text-sm font-medium text-gray-700 mb-1">Poli/Kategori Konsultasi <span class="text-red-500">*</span></label>
-                            <select name="poli_online" id="poli_online" required
-                                class="w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition-all @error('poli_online') border-red-500 @enderror">
-                                <option value="">Pilih Kategori</option>
-                                <option value="umum" {{ old('poli_online') == 'umum' ? 'selected' : '' }}>Umum (24 Jam)</option>
-                                <option value="spesialis" {{ old('poli_online') == 'spesialis' ? 'selected' : '' }}>Spesialis (Jadwal)</option>
-                                <option value="lanjutan" {{ old('poli_online') == 'lanjutan' ? 'selected' : '' }}>Tindak Lanjut Pasca Kunjungan</option>
-                            </select>
-                            @error('poli_online') <p class="text-sm text-red-500 mt-1">{{ $message }}</p> @enderror
-                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            
+                            {{-- 1. PILIH POLI --}}
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">1. Pilih Poli Tujuan</label>
+                                <select name="clinic_id" id="clinic_id" required
+                                    class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-white">
+                                    <option value="">-- Pilih Poli --</option>
+                                    @foreach ($clinics as $clinic)
+                                        <option value="{{ $clinic->id }}">{{ $clinic->nama_poli }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
 
-                        {{-- Tanggal Konsultasi --}}
-                        <div>
-                            <label for="tgl_online" class="block text-sm font-medium text-gray-700 mb-1">Tanggal Konsultasi <span class="text-red-500">*</span></label>
-                            <input type="date" name="tgl_online" id="tgl_online" required value="{{ old('tgl_online') }}"
-                                class="w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition-all @error('tgl_online') border-red-500 @enderror">
-                            @error('tgl_online') <p class="text-sm text-red-500 mt-1">{{ $message }}</p> @enderror
-                        </div>
-
-                        {{-- Keluhan Detail --}}
-                        <div class="md:col-span-2">
-                            <label for="keluhan_online" class="block text-sm font-medium text-gray-700 mb-1">Jelaskan Keluhan Anda (Wajib)</label>
-                            <textarea name="keluhan_online" id="keluhan_online" rows="4" placeholder="Jelaskan secara detail gejala, durasi, dan riwayat pengobatan yang sudah Anda lakukan."
-                                class="w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition-all @error('keluhan_online') border-red-500 @enderror" required>{{ old('keluhan_online') }}</textarea>
-                            @error('keluhan_online') <p class="text-sm text-red-500 mt-1">{{ $message }}</p> @enderror
-                        </div>
-
-                        {{-- Catatan Penting --}}
-                        <div class="md:col-span-2">
-                            <div class="p-3 bg-yellow-100 rounded-lg text-sm text-yellow-800 flex items-start">
-                                <i class="bi bi-info-circle-fill text-xl mr-2 flex-shrink-0"></i>
-                                <p>Konsultasi Online mungkin memerlukan pembayaran di muka. Dokter akan dihubungi setelah pembayaran diverifikasi.</p>
+                            {{-- 2. PILIH DOKTER (Dinamis) --}}
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">2. Pilih Dokter</label>
+                                <select name="doctor_id" id="doctor_id" required disabled
+                                    class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all bg-gray-100 disabled:text-gray-400">
+                                    <option value="">-- Pilih Poli Terlebih Dahulu --</option>
+                                </select>
+                                <p id="loading-dokter" class="hidden text-xs text-blue-500 mt-1 animate-pulse">Sedang memuat dokter...</p>
                             </div>
                         </div>
 
-                        {{-- Tombol Submit --}}
-                        <div class="md:col-span-2 pt-4">
-                            <button type="submit" class="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-semibold py-3 rounded-xl transition-colors duration-300 flex items-center justify-center shadow-lg">
-                                <i class="bi bi-camera-video-fill mr-2"></i> Ajukan Konsultasi Telemedis
+                        {{-- INFO JADWAL DOKTER --}}
+                        <div id="info-jadwal-container" class="hidden bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-r-lg">
+                            <div class="flex">
+                                <div class="flex-shrink-0">
+                                    <i class="bi bi-info-circle-fill text-yellow-400"></i>
+                                </div>
+                                <div class="ml-3">
+                                    <p class="text-sm text-yellow-700 font-bold">Jadwal Praktek Dokter:</p>
+                                    <p class="text-sm text-yellow-700 mt-1" id="text-jadwal">-</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {{-- 3. TANGGAL --}}
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">3. Rencana Tanggal</label>
+                                <input type="date" name="tanggal_kunjungan" id="tanggal_kunjungan" required
+                                    class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 transition-all">
+                            </div>
+
+                            {{-- 4. JAM (Dinamis dari Controller) --}}
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">4. Pilih Jam Kunjungan</label>
+                                <select name="jam_kunjungan" id="jam_kunjungan" required disabled
+                                    class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 transition-all bg-gray-100">
+                                    <option value="">-- Pilih Dokter Terlebih Dahulu --</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        {{-- KELUHAN --}}
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Keluhan Utama</label>
+                            <textarea name="keluhan" rows="3" placeholder="Jelaskan keluhan singkat yang Anda rasakan..."
+                                class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 transition-all"></textarea>
+                        </div>
+
+                        <div class="pt-4">
+                            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl transition-all shadow-lg hover:shadow-xl flex items-center justify-center">
+                                <i class="bi bi-send-check-fill mr-2"></i> Buat Janji Temu
                             </button>
                         </div>
                     </form>
                 </div>
-
             </div>
-
-        </div>
+        @endif
     </div>
 
+    {{-- JAVASCRIPT UNTUK DROPDOWN BERTINGKAT --}}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const clinicSelect = document.getElementById('clinic_id');
+            const doctorSelect = document.getElementById('doctor_id');
+            const jamSelect = document.getElementById('jam_kunjungan');
+            const loadingDokter = document.getElementById('loading-dokter');
+            const infoJadwal = document.getElementById('info-jadwal-container');
+            const textJadwal = document.getElementById('text-jadwal');
+
+            // 1. Event Saat Poli Dipilih
+            clinicSelect.addEventListener('change', function() {
+                const clinicId = this.value;
+                
+                // Reset Dokter & Jam
+                doctorSelect.innerHTML = '<option value="">-- Pilih Dokter --</option>';
+                doctorSelect.disabled = true;
+                doctorSelect.classList.add('bg-gray-100');
+                
+                jamSelect.innerHTML = '<option value="">-- Pilih Dokter Terlebih Dahulu --</option>';
+                jamSelect.disabled = true;
+                
+                infoJadwal.classList.add('hidden');
+
+                if (clinicId) {
+                    loadingDokter.classList.remove('hidden');
+                    
+                    // Fetch ke API Controller
+                    fetch(`/pasien/konsultasi/get-doctors/${clinicId}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.length > 0) {
+                                data.forEach(doctor => {
+                                    // Tampilkan Nama + Spesialis
+                                    const option = document.createElement('option');
+                                    option.value = doctor.id;
+                                    option.textContent = `${doctor.user.name} (${doctor.spesialis || '-'})`;
+                                    doctorSelect.appendChild(option);
+                                });
+                                doctorSelect.disabled = false;
+                                doctorSelect.classList.remove('bg-gray-100');
+                            } else {
+                                doctorSelect.innerHTML = '<option value="">-- Tidak ada dokter tersedia --</option>';
+                            }
+                        })
+                        .catch(err => console.error(Error, err))
+                        .finally(() => {
+                            loadingDokter.classList.add('hidden');
+                        });
+                }
+            });
+
+            // 2. Event Saat Dokter Dipilih
+            doctorSelect.addEventListener('change', function() {
+                const doctorId = this.value;
+
+                // Reset Jam
+                jamSelect.innerHTML = '<option value="">-- Pilih Jam --</option>';
+                jamSelect.disabled = true;
+                jamSelect.classList.add('bg-gray-100');
+                
+                infoJadwal.classList.add('hidden');
+
+                if (doctorId) {
+                    // Fetch ke API Controller
+                    fetch(`/pasien/konsultasi/get-schedule/${doctorId}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            // Update Info Jadwal Teks
+                            textJadwal.textContent = data.jadwal_teks;
+                            infoJadwal.classList.remove('hidden');
+
+                            // Update Dropdown Slot Waktu
+                            if (data.slots && data.slots.length > 0) {
+                                data.slots.forEach(time => {
+                                    const option = document.createElement('option');
+                                    option.value = time; // Simpan format HH:mm
+                                    option.textContent = time + ' WIB';
+                                    jamSelect.appendChild(option);
+                                });
+                                jamSelect.disabled = false;
+                                jamSelect.classList.remove('bg-gray-100');
+                            } else {
+                                jamSelect.innerHTML = '<option value="">-- Jadwal Penuh / Libur --</option>';
+                            }
+                        })
+                        .catch(err => console.error(Error, err));
+                }
+            });
+        });
+    </script>
 @endsection

@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Clinic;
 use App\Models\Doctor;
 use App\Models\Appointment;
+use App\Models\Patient; // Tambahkan import Patient
 use Illuminate\Support\Facades\Auth;
 
 class ConsultationController extends Controller
@@ -15,96 +16,95 @@ class ConsultationController extends Controller
      */
     public function index()
     {
-        // Ambil data Poli/Clinic
+        $user = Auth::user();
         $clinics = Clinic::select('id', 'nama_poli')->get();
+
+        // 1. Cari ID Pasien yang sedang login
+        $patientId = Patient::where('user_id', $user->id)->value('id'); 
+
+        $activeAppointment = null;
+        if ($patientId) {
+            // 2. Cek Janji Temu Aktif: Status menunggu/disetujui DAN BELUM punya Medical Record
+            $activeAppointment = Appointment::where('patient_id', $patientId)
+                                            ->whereIn('status', ['menunggu', 'disetujui']) 
+                                            // <<< INI KUNCINYA: Jika sudah ada MedicalRecord, dianggap sudah selesai
+                                            ->doesntHave('medicalRecord') 
+                                            ->with(['doctor.user', 'clinic'])
+                                            ->latest()
+                                            ->first();
+        }
+
+        return view('pasien.konsultasi', compact('clinics', 'activeAppointment'));
+    }
+
+    /**
+     * API: Ambil Dokter berdasarkan ID Poli
+     */
+    public function getDoctorsByClinic($clinicId)
+    {
+        $doctors = Doctor::where('clinic_id', $clinicId)
+                         ->with('user:id,name') 
+                         ->get(['id', 'user_id', 'spesialis']);
         
-        // Ambil data Dokter
-        // Relasi `user` diasumsikan sudah ada di Model Doctor
-        $doctors = Doctor::with('user:id,name')->get(['id', 'user_id', 'spesialis']);
+        return response()->json($doctors);
+    }
 
-        // Data Janji Temu Aktif (contoh, ambil yang statusnya 'menunggu' atau 'disetujui')
-        // *Asumsi: Pengguna adalah Pasien (Role ID 4) dan ID Pasien ada di tabel 'patients'*
-        // Karena kita belum mengimplementasikan tabel 'patients', 
-        // kita akan menggunakan data dummy atau user_id dari Auth::user() untuk simplicity.
-
-        // TODO: Implementasi yang benar harus mencocokkan user_id dari Auth::user()
-        //       ke patient_id di tabel 'patients', lalu mencari appointments dengan patient_id tersebut.
-        $activeAppointment = Appointment::where('patient_id', 1) // Ganti dengan ID pasien user yang login
-                                        ->whereIn('status', ['menunggu', 'disetujui'])
-                                        ->with('doctor.user')
-                                        ->latest()
-                                        ->first();
-
-        // Data dummy slot waktu (untuk keperluan form, slot ini biasanya dihitung/disimpan di database)
-        $timeSlots = [
-            ['value' => '10:00:00', 'label' => '10:00 - 10:30 (Tersedia)', 'disabled' => false],
-            ['value' => '10:30:00', 'label' => '10:30 - 11:00 (Tersedia)', 'disabled' => false],
-            ['value' => '11:00:00', 'label' => '11:00 - 11:30 (Penuh)', 'disabled' => true],
-        ];
-
-        return view('pasien.konsultasi', [
-            'clinics' => $clinics,
-            'doctors' => $doctors,
-            'timeSlots' => $timeSlots,
-            'activeAppointment' => $activeAppointment, // Kirim data janji temu aktif
+    /**
+     * API: Ambil Jadwal berdasarkan ID Dokter
+     */
+    public function getDoctorSchedule($doctorId)
+    {
+        $doctor = Doctor::select('id', 'jadwal_praktek')->find($doctorId);
+        
+        // Slot waktu generik (bisa disesuaikan logic-nya untuk ketersediaan real-time)
+        return response()->json([
+            'jadwal_teks' => $doctor->jadwal_praktek ?? 'Jadwal belum diatur',
+            'slots' => [
+                '09:00', '09:30', '10:00', '10:30', '11:00', '13:00', '13:30', '14:00'
+            ]
         ]);
     }
 
     /**
-     * Memproses pengajuan janji temu tatap muka
+     * Proses Simpan Janji Temu (Tatap Muka)
      */
-    public function storeTatapMuka(Request $request)
+    public function store(Request $request)
     {
-        // 1. Validasi Data
         $request->validate([
-            'poli_tm' => 'required|exists:clinics,id',
-            'dokter_tm' => 'nullable|exists:doctors,id',
-            'tgl_tm' => 'required|date|after_or_equal:today',
-            'waktu_tm' => 'required|date_format:H:i:s',
-            'keluhan_tm' => 'nullable|string|max:500',
+            'clinic_id' => 'required|exists:clinics,id',
+            'doctor_id' => 'required|exists:doctors,id',
+            'tanggal_kunjungan' => 'required|date|after_or_equal:today',
+            'jam_kunjungan' => 'required',
+            'keluhan' => 'nullable|string|max:500',
         ]);
         
-        // *Asumsi: Patient ID diambil dari user yang sedang login.*
-        // TODO: Ganti ini dengan logic untuk mendapatkan patient_id dari user yang login
-        $patientId = 1; // Contoh: ID Pasien user yang login
+        $user = Auth::user();
+        $patientId = Patient::where('user_id', $user->id)->value('id');
 
-        // 2. Buat Janji Temu Baru
+        if (!$patientId) {
+            return back()->with('error', 'Data pasien tidak ditemukan. Harap lengkapi profil terlebih dahulu.');
+        }
+
+        // Pengecekan Duplikasi Janji Temu Aktif (menggunakan logika doesn'tHave('medicalRecord'))
+        $existing = Appointment::where('patient_id', $patientId)
+            ->whereIn('status', ['menunggu', 'disetujui'])
+            ->doesntHave('medicalRecord')
+            ->exists();
+
+        if ($existing) {
+            return back()->with('error', 'Anda masih memiliki janji temu yang aktif. Selesaikan terlebih dahulu.');
+        }
+
         Appointment::create([
             'patient_id' => $patientId,
-            'doctor_id' => $request->input('dokter_tm') ?? 1, // Jika dokter opsional, set default atau logic lain
-            'clinic_id' => $request->input('poli_tm'),
-            'tanggal_kunjungan' => $request->input('tgl_tm'),
-            'jam_kunjungan' => $request->input('waktu_tm'),
-            'keluhan' => $request->input('keluhan_tm'),
-            'status' => 'menunggu', // Status default
-            // Telemedis (Online) tidak perlu diisi jika form ini hanya untuk Tatap Muka
+            'doctor_id' => $request->doctor_id,
+            'clinic_id' => $request->clinic_id,
+            'tanggal_kunjungan' => $request->tanggal_kunjungan,
+            'jam_kunjungan' => $request->jam_kunjungan,
+            'keluhan' => $request->keluhan,
+            'status' => 'menunggu',
         ]);
 
-        // 3. Redirect dengan pesan sukses
-        return redirect()->route('consultation.index')->with('success', 'Pengajuan janji temu Tatap Muka berhasil diajukan dan sedang menunggu persetujuan.');
-    }
-    
-    /**
-     * Memproses pengajuan janji temu online (telemedis)
-     */
-    public function storeOnline(Request $request)
-    {
-        // 1. Validasi Data
-        $request->validate([
-            'poli_online' => 'required|string|max:100', // Karena form online tidak pakai ID poli dari DB
-            'tgl_online' => 'required|date|after_or_equal:today',
-            'keluhan_online' => 'required|string|max:1000',
-        ]);
-        
-        // *CATATAN: Logika untuk Konsultasi Online (Telemedis) lebih kompleks 
-        // karena harus mencari/mengalokasikan dokter dan jam.*
-        
-        // Karena form online di blade menggunakan nilai string (umum, spesialis),
-        // kita akan anggap ini sebagai placeholder. Untuk integrasi ke database,
-        // perlu disesuaikan logic-nya (e.g., menentukan clinic_id & doctor_id)
-
-        // TODO: Implementasi Telemedis yang sesungguhnya
-        
-        return redirect()->route('consultation.index')->with('info', 'Fitur Konsultasi Online sedang dalam pengembangan. Pengajuan Anda berhasil dicatat sebagai minat.');
+        return redirect()->route('pasien.konsultasi')->with('success', 'Janji temu berhasil diajukan! Mohon datang tepat waktu.');
     }
 }

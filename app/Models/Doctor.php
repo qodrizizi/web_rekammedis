@@ -12,7 +12,8 @@ class Doctor extends Model
     protected $table = 'doctors';
 
     protected $fillable = [
-        'user_id', 
+        'user_id',
+        'clinic_id', // <<< INI YANG BARU DITAMBAHKAN 
         'nip', 
         'spesialis', 
         'jadwal_praktek'
@@ -32,5 +33,9 @@ class Doctor extends Model
     public function appointments()
     {
         return $this->hasMany(Appointment::class);
+    }
+    public function clinic() // <<< INI YANG HARUS DITAMBAHKAN
+    {
+        return $this->belongsTo(Clinic::class, 'clinic_id');
     }
 }

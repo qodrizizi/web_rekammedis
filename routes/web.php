@@ -225,10 +225,17 @@ Route::middleware(['auth'])->prefix('pasien')->name('pasien.')->group(function (
     // Rekam Medis
     Route::get('/rekam_medis', [PatientController::class, 'medicalRecord'])->name('rekam_medis');
     
-    // Konsultasi
-    Route::controller(ConsultationController::class)->prefix('konsultasi')->name('konsultasi')->group(function () {
-        Route::get('/', 'index');
-        Route::post('/tatap-muka', 'storeTatapMuka')->name('.store.tm');
-        Route::post('/online', 'storeOnline')->name('.store.online');
+    Route::prefix('konsultasi')->name('konsultasi')->group(function () {
+        
+        // 1. Proses Simpan (POST /pasien/konsultasi) -> Name: pasien.konsultasi.store
+        Route::post('/', [ConsultationController::class, 'store'])->name('.store');
+
+        // 2. Halaman Utama (GET /pasien/konsultasi) -> Name: pasien.konsultasi
+        // Jika tidak ada ->name(''), maka nama rute ini adalah 'pasien.konsultasi'
+        Route::get('/', [ConsultationController::class, 'index'])->name(''); 
+
+        // 3. API Data Dokter & Jadwal (AJAX)
+        Route::get('/get-doctors/{clinic_id}', [ConsultationController::class, 'getDoctorsByClinic'])->name('.get-doctors');
+        Route::get('/get-schedule/{doctor_id}', [ConsultationController::class, 'getDoctorSchedule'])->name('.get-schedule');
     });
 });

@@ -40,4 +40,12 @@ class Appointment extends Model
     {
         return $this->belongsTo(Clinic::class, 'clinic_id');
     }
+
+    /**
+     * Relasi ke Medical Record. Digunakan untuk mengecek apakah janji temu sudah diproses dokter.
+     */
+    public function medicalRecord()
+    {
+        return $this->hasOne(MedicalRecord::class, 'appointment_id');
+    }
 }
