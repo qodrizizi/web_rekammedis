@@ -41,10 +41,11 @@ Rekam Medis Digital adalah aplikasi berbasis web yang dirancang untuk mendigital
 
 ## 🚀 Teknologi yang Digunakan
 
-- **Backend:** [Sesuaikan dengan tech stack Anda, misal: PHP/Laravel, Node.js, Python/Django]
-- **Frontend:** [Sesuaikan, misal: HTML, CSS, JavaScript, React, Vue.js]
-- **Database:** [Sesuaikan, misal: MySQL, PostgreSQL, MongoDB]
-- **Framework:** [Sesuaikan, misal: Bootstrap, Tailwind CSS]
+![Laravel](https://img.shields.io/badge/Laravel-FF2D20?style=for-the-badge&logo=laravel&logoColor=white)
+![PHP](https://img.shields.io/badge/PHP-777BB4?style=for-the-badge&logo=php&logoColor=white)
+![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white)
+![Tailwind](https://img.shields.io/badge/Tailwind-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)
+![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)
 
 ## 📦 Instalasi
 
@@ -90,7 +91,7 @@ php artisan migrate --seed
 6. Jalankan aplikasi
 ```bash
 php artisan serve
-npm run dev
+composer run dev
 ```
 
 Akses aplikasi di `http://localhost:8000`
