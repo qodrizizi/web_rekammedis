@@ -63,7 +63,7 @@ Rekam Medis Digital adalah aplikasi berbasis web yang dirancang untuk mendigital
 1. Clone repository
 ```bash
 git clone https://github.com/qodrizizi/web_rekammedis.git
-cd rekam-medis-digital
+cd web_rekammedis
 ```
 
 2. Install dependencies
