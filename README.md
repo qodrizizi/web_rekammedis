@@ -61,7 +61,7 @@ Rekam Medis Digital adalah aplikasi berbasis web yang dirancang untuk mendigital
 
 1. Clone repository
 ```bash
-git clone https://github.com/username/rekam-medis-digital.git
+git clone https://github.com/qodrizizi/web_rekammedis.git
 cd rekam-medis-digital
 ```
 
@@ -141,7 +141,7 @@ Distributed under the MIT License. See `LICENSE` for more information.
 ## 📧 Kontak
 Ahmad Al Qodri Azizi Dalimunthe - ahmadalqodridalimunthe@example.com
 
-Project Link: [https://github.com/username/rekam-medis-digital](https://github.com/username/rekam-medis-digital)
+Project Link: (https://github.com/qodrizizi/web_rekammedis.git)
 
 ## 🙏 Acknowledgments
 
