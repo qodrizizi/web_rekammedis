@@ -16,4 +16,19 @@ class Role extends Model
         'role_name',
         'description',
     ];
+
+    public function permissions()
+    {
+        return $this->belongsToMany(Permission::class);
+    }
+
+    public function hasPermission($slug)
+    {
+        // Superadmin selalu punya akses
+        if ($this->role_name === 'Superadmin') {
+            return true;
+        }
+        
+        return $this->permissions->contains('slug', $slug);
+    }
 }

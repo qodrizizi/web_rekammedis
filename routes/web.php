@@ -13,11 +13,10 @@ use App\Http\Controllers\MedicationController;
 use App\Http\Controllers\PasienController;
 use App\Http\Controllers\PatientController;
 use App\Http\Controllers\PendaftaranController;
-use App\Http\Controllers\PetugasMedicationController;
-use App\Http\Controllers\PetugasPasienController;
 use App\Http\Controllers\PetugasResepController;
 use App\Http\Controllers\PetugasDashboardController;
 use App\Http\Controllers\PoliklinikController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RekamMedisController;
 use App\Http\Controllers\RoleController;
 use Illuminate\Support\Facades\Route;
@@ -177,7 +176,7 @@ Route::middleware(['auth'])->prefix('petugas')->name('petugas.')->group(function
     });
     
     // Data Pasien
-    Route::resource('pasien', PetugasPasienController::class)
+    Route::resource('pasien', PasienController::class)
         ->except(['create', 'show', 'edit'])
         ->names([
             'index' => 'pasien',
@@ -187,7 +186,7 @@ Route::middleware(['auth'])->prefix('petugas')->name('petugas.')->group(function
         ]);
     
     // Data Obat
-    Route::controller(PetugasMedicationController::class)->group(function () {
+    Route::controller(MedicationController::class)->group(function () {
         Route::get('obat', 'index')->name('obat');
         Route::post('obat', 'store')->name('obat.store');
         Route::put('obat/{medication}', 'update')->name('obat.update');
@@ -238,4 +237,11 @@ Route::middleware(['auth'])->prefix('pasien')->name('pasien.')->group(function (
         Route::get('/get-doctors/{clinic_id}', [ConsultationController::class, 'getDoctorsByClinic'])->name('.get-doctors');
         Route::get('/get-schedule/{doctor_id}', [ConsultationController::class, 'getDoctorSchedule'])->name('.get-schedule');
     });
+});
+
+// ==================== PROFILE (ALL ROLES) ====================
+Route::middleware(['auth'])->prefix('profile')->name('profile.')->group(function () {
+    Route::get('/', [ProfileController::class, 'index'])->name('index');
+    Route::post('/update', [ProfileController::class, 'update'])->name('update');
+    Route::post('/password', [ProfileController::class, 'updatePassword'])->name('password');
 });

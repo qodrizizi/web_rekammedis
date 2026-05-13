@@ -32,7 +32,10 @@
         }
     </style>
 </head>
-<body class="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 relative overflow-hidden">
+<body class="min-h-screen relative overflow-hidden bg-cover bg-center bg-no-repeat" style="background-image: url('{{ asset('storage/assets/bglogin.png') }}');">
+    <!-- Overlay to ensure readability -->
+    <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-[2px]"></div>
+
     <!-- Animated Background Elements -->
     <div class="absolute inset-0 overflow-hidden">
         <div class="absolute -top-40 -right-40 w-80 h-80 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 float-animation"></div>

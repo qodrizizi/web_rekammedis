@@ -21,6 +21,15 @@
             }
         }
     </script>
+    <style>
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
 </head>
 <body class="bg-gradient-to-br from-slate-50 to-slate-100">
     <div class="flex h-screen overflow-hidden">
@@ -46,7 +55,7 @@
                     </div>
                 </div>
 
-                <nav class="flex-1 overflow-y-auto py-6 px-3">
+                <nav class="flex-1 overflow-y-auto py-6 px-3 scrollbar-hide">
                     <div class="space-y-1">
                         {{-- Dashboard Menu untuk semua role --}}
                         <a href="{{ url('/' . Auth::user()->role . '/dashboard') }}" 
@@ -55,166 +64,226 @@
                             <span class="font-medium">Dashboard</span>
                         </a>
 
-                        {{-- ================== ADMIN MENU (role: admin) ================== --}}
-                        @if(Auth::user()->role === 'admin')
+                        {{-- ================== ADMIN MENU (role: admin, superadmin) ================== --}}
+                        @if(Auth::user()->roleModel->hasPermission('admin_pasien') || 
+                            Auth::user()->roleModel->hasPermission('admin_dokter') || 
+                            Auth::user()->roleModel->hasPermission('admin_obat') || 
+                            Auth::user()->roleModel->hasPermission('admin_poliklinik'))
                             <div class="pt-4 pb-2 px-4">
                                 <p class="text-xs font-semibold text-white/60 uppercase tracking-wider">Data Master</p>
                             </div>
                             
+                            @if(Auth::user()->roleModel->hasPermission('admin_pasien'))
                             <a href="{{ route('admin.pasien')}}" 
                                class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl hover:bg-white/10 transition-all duration-200 group {{ Request::is('admin/pasien*') ? 'bg-white/20' : '' }}">
                                 <i class="bi bi-people text-xl group-hover:scale-110 transition-transform"></i>
                                 <span class="font-medium">Data Pasien</span>
                             </a>
+                            @endif
                             
+                            @if(Auth::user()->roleModel->hasPermission('admin_dokter'))
                             <a href="{{ route('admin.dokter')}}" 
                                class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl hover:bg-white/10 transition-all duration-200 group {{ Request::is('admin/dokter*') ? 'bg-white/20' : '' }}">
                                 <i class="bi bi-person-badge text-xl group-hover:scale-110 transition-transform"></i>
                                 <span class="font-medium">Data Dokter</span>
                             </a>
+                            @endif
                             
+                            @if(Auth::user()->roleModel->hasPermission('admin_obat'))
                             <a href="{{ route('admin.obat')}}" 
                                class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl hover:bg-white/10 transition-all duration-200 group {{ Request::is('admin/obat*') ? 'bg-white/20' : '' }}">
                                 <i class="bi bi-capsule text-xl group-hover:scale-110 transition-transform"></i>
                                 <span class="font-medium">Data Obat</span>
                             </a>
+                            @endif
                             
+                            @if(Auth::user()->roleModel->hasPermission('admin_poliklinik'))
                             <a href="{{ route('admin.poliklinik')}}" 
                                class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl hover:bg-white/10 transition-all duration-200 group {{ Request::is('admin/poliklinik*') ? 'bg-white/20' : '' }}">
                                 <i class="bi bi-hospital text-xl group-hover:scale-110 transition-transform"></i>
                                 <span class="font-medium">Poliklinik</span>
                             </a>
+                            @endif
+                        @endif
 
+                        @if(Auth::user()->roleModel->hasPermission('admin_pendaftaran') || 
+                            Auth::user()->roleModel->hasPermission('admin_rekam_medis'))
                             <div class="pt-4 pb-2 px-4">
                                 <p class="text-xs font-semibold text-white/60 uppercase tracking-wider">Pelayanan</p>
                             </div>
                             
+                            @if(Auth::user()->roleModel->hasPermission('admin_pendaftaran'))
                             <a href="{{ route('admin.pendaftaran')}}" 
                                class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl hover:bg-white/10 transition-all duration-200 group {{ Request::is('admin/pendaftaran*') ? 'bg-white/20' : '' }}">
                                 <i class="bi bi-calendar-check text-xl group-hover:scale-110 transition-transform"></i>
                                 <span class="font-medium">Pendaftaran</span>
                             </a>
+                            @endif
                             
+                            @if(Auth::user()->roleModel->hasPermission('admin_rekam_medis'))
                             <a href="{{ route('admin.rekam_medis')}}" 
                                class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl hover:bg-white/10 transition-all duration-200 group {{ Request::is('admin/rekam_medis*') ? 'bg-white/20' : '' }}">
                                 <i class="bi bi-clipboard2-pulse text-xl group-hover:scale-110 transition-transform"></i>
                                 <span class="font-medium">Rekam Medis</span>
                             </a>
+                            @endif
+                        @endif
 
+                        @if(Auth::user()->roleModel->hasPermission('admin_roles') || 
+                            Auth::user()->roleModel->hasPermission('admin_laporan'))
                             <div class="pt-4 pb-2 px-4">
                                 <p class="text-xs font-semibold text-white/60 uppercase tracking-wider">Sistem</p>
                             </div>
                             
+                            @if(Auth::user()->roleModel->hasPermission('admin_roles'))
                             <a href="{{ route('admin.roles')}}" 
                                class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl hover:bg-white/10 transition-all duration-200 group {{ Request::is('admin/roles*') ? 'bg-white/20' : '' }}">
                                 <i class="bi bi-shield-check text-xl group-hover:scale-110 transition-transform"></i>
                                 <span class="font-medium">Manajemen Role</span>
                             </a>
+                            @endif
                             
+                            @if(Auth::user()->roleModel->hasPermission('admin_laporan'))
                             <a href="{{ route('admin.laporan')}}" 
                                class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl hover:bg-white/10 transition-all duration-200 group {{ Request::is('admin/laporan*') ? 'bg-white/20' : '' }}">
                                 <i class="bi bi-file-earmark-bar-graph text-xl group-hover:scale-110 transition-transform"></i>
                                 <span class="font-medium">Laporan</span>
                             </a>
+                            @endif
                         @endif
 
-                        {{-- ================== DOKTER MENU (role: dokter) ================== --}}
-                        @if(Auth::user()->role === 'dokter')
+                        {{-- ================== DOKTER MENU (role: dokter, superadmin) ================== --}}
+                        @if(Auth::user()->roleModel->hasPermission('dokter_pasien') || 
+                            Auth::user()->roleModel->hasPermission('dokter_jadwal') || 
+                            Auth::user()->roleModel->hasPermission('dokter_rekam_medis') || 
+                            Auth::user()->roleModel->hasPermission('dokter_laporan'))
                             <div class="pt-4 pb-2 px-4">
                                 <p class="text-xs font-semibold text-white/60 uppercase tracking-wider">Pelayanan Medis</p>
                             </div>
                             
+                            @if(Auth::user()->roleModel->hasPermission('dokter_pasien'))
                             <a href="{{ route('dokter.pasien') }}" 
                                class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl hover:bg-white/10 transition-all duration-200 group {{ Request::is('dokter/pasien*') ? 'bg-white/20' : '' }}">
                                 <i class="bi bi-people text-xl group-hover:scale-110 transition-transform"></i>
                                 <span class="font-medium">Data Pasien</span>
                             </a>
+                            @endif
                             
+                            @if(Auth::user()->roleModel->hasPermission('dokter_jadwal'))
                             <a href="{{ route('dokter.jadwal') }}" 
                                class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl hover:bg-white/10 transition-all duration-200 group {{ Request::is('dokter/jadwal*') ? 'bg-white/20' : '' }}">
                                 <i class="bi bi-clock-history text-xl group-hover:scale-110 transition-transform"></i>
                                 <span class="font-medium">Data Jadwal</span>
                             </a>
+                            @endif
 
+                            @if(Auth::user()->roleModel->hasPermission('dokter_rekam_medis'))
                             <a href="{{ route('dokter.rekam_medis') }}" 
                                class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl hover:bg-white/10 transition-all duration-200 group {{ Request::is('dokter/rekam_medis*') ? 'bg-white/20' : '' }}">
                                 <i class="bi bi-clipboard2-pulse text-xl group-hover:scale-110 transition-transform"></i>
                                 <span class="font-medium">Rekam Medis</span>
                             </a>
+                            @endif
                             
+                            @if(Auth::user()->roleModel->hasPermission('dokter_laporan'))
                             <a href="{{ route('dokter.laporan') }}" 
                                class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl hover:bg-white/10 transition-all duration-200 group {{ Request::is('dokter/laporan*') ? 'bg-white/20' : '' }}">
                                 <i class="bi bi-file-earmark-text text-xl group-hover:scale-110 transition-transform"></i>
                                 <span class="font-medium">Laporan</span>
                             </a>
+                            @endif
                         @endif
 
-                        {{-- ================== PETUGAS MENU (role: petugas) ================== --}}
-                        @if(Auth::user()->role === 'petugas')
+                        {{-- ================== PETUGAS MENU (role: petugas, superadmin) ================== --}}
+                        @if(Auth::user()->roleModel->hasPermission('petugas_pendaftaran') || 
+                            Auth::user()->roleModel->hasPermission('petugas_pasien'))
                             <div class="pt-4 pb-2 px-4">
                                 <p class="text-xs font-semibold text-white/60 uppercase tracking-wider">Administrasi</p>
                             </div>
                             
+                            @if(Auth::user()->roleModel->hasPermission('petugas_pendaftaran'))
                             <a href="{{ route('petugas.pendaftaran') }}" 
                                class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl hover:bg-white/10 transition-all duration-200 group {{ Request::is('petugas/pendaftaran*') ? 'bg-white/20' : '' }}">
                                 <i class="bi bi-calendar-plus text-xl group-hover:scale-110 transition-transform"></i>
                                 <span class="font-medium">Pendaftaran</span>
                             </a>
+                            @endif
                             
+                            @if(Auth::user()->roleModel->hasPermission('petugas_pasien'))
                             <a href="{{ route('petugas.pasien') }}" 
                                class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl hover:bg-white/10 transition-all duration-200 group {{ Request::is('petugas/pasien*') ? 'bg-white/20' : '' }}">
                                 <i class="bi bi-person-lines-fill text-xl group-hover:scale-110 transition-transform"></i>
                                 <span class="font-medium">Data Pasien</span>
                             </a>
+                            @endif
+                        @endif
 
+                        @if(Auth::user()->roleModel->hasPermission('petugas_obat') || 
+                            Auth::user()->roleModel->hasPermission('petugas_resep'))
                             <div class="pt-4 pb-2 px-4">
                                 <p class="text-xs font-semibold text-white/60 uppercase tracking-wider">Farmasi</p>
                             </div>
                             
+                            @if(Auth::user()->roleModel->hasPermission('petugas_obat'))
                             <a href="{{ route('petugas.obat') }}" 
                                class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl hover:bg-white/10 transition-all duration-200 group {{ Request::is('petugas/obat*') ? 'bg-white/20' : '' }}">
                                 <i class="bi bi-capsule text-xl group-hover:scale-110 transition-transform"></i>
                                 <span class="font-medium">Data Obat</span>
                             </a>
+                            @endif
                             
+                            @if(Auth::user()->roleModel->hasPermission('petugas_resep'))
                             <a href="{{ route('petugas.resep') }}" 
                                class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl hover:bg-white/10 transition-all duration-200 group {{ Request::is('petugas/resep*') ? 'bg-white/20' : '' }}">
                                 <i class="bi bi-clipboard-check text-xl group-hover:scale-110 transition-transform"></i>
                                 <span class="font-medium">Resep Obat</span>
                             </a>
+                            @endif
                         @endif
 
-                        {{-- ================== PASIEN MENU (role: pasien) ================== --}}
-                        @if(Auth::user()->role === 'pasien')
+                        {{-- ================== PASIEN MENU (role: pasien, superadmin) ================== --}}
+                        @if(Auth::user()->roleModel->hasPermission('pasien_profil') || 
+                            Auth::user()->roleModel->hasPermission('pasien_rekam_medis') || 
+                            Auth::user()->roleModel->hasPermission('pasien_konsultasi'))
                             <div class="pt-4 pb-2 px-4">
                                 <p class="text-xs font-semibold text-white/60 uppercase tracking-wider">Layanan Pasien</p>
                             </div>
                             
+                            @if(Auth::user()->roleModel->hasPermission('pasien_profil'))
                             <a href="{{ route('pasien.profil') }}" 
                                class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl hover:bg-white/10 transition-all duration-200 group {{ Request::is('pasien/profil*') ? 'bg-white/20' : '' }}">
                                 <i class="bi bi-person text-xl group-hover:scale-110 transition-transform"></i>
                                 <span class="font-medium">Profil Saya</span>
                             </a>
+                            @endif
                             
+                            @if(Auth::user()->roleModel->hasPermission('pasien_rekam_medis'))
                             <a href="{{ route('pasien.rekam_medis') }}" 
                                class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl hover:bg-white/10 transition-all duration-200 group {{ Request::is('pasien/rekam_medis*') ? 'bg-white/20' : '' }}">
                                 <i class="bi bi-clipboard2-heart text-xl group-hover:scale-110 transition-transform"></i>
                                 <span class="font-medium">Riwayat Medis</span>
                             </a>
+                            @endif
                             
+                            @if(Auth::user()->roleModel->hasPermission('pasien_konsultasi'))
                             <a href="{{ route('pasien.konsultasi') }}" 
                                class="nav-link flex items-center space-x-3 px-4 py-3 rounded-xl hover:bg-white/10 transition-all duration-200 group {{ Request::is('pasien/konsultasi*') ? 'bg-white/20' : '' }}">
                                 <i class="bi bi-calendar-event text-xl group-hover:scale-110 transition-transform"></i>
                                 <span class="font-medium">Jadwal Konsultasi</span>
                             </a>
+                            @endif
                         @endif
                     </div>
                 </nav>
 
                 <div class="p-4 border-t border-white/20">
                     <div class="flex items-center space-x-3 px-3 py-2">
-                        <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center">
-                            <i class="bi bi-person-fill text-primary text-xl"></i>
+                        <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center overflow-hidden shadow-sm">
+                            @if(Auth::user()->avatar)
+                                <img src="{{ asset('storage/' . Auth::user()->avatar) }}" class="w-full h-full object-cover">
+                            @else
+                                <i class="bi bi-person-fill text-primary text-xl"></i>
+                            @endif
                         </div>
                         <div class="flex-1">
                             <p class="font-semibold text-sm">{{ Auth::user()->name }}</p>
@@ -265,23 +334,23 @@
                                     <p class="text-sm font-semibold text-gray-700">{{ Auth::user()->name }}</p>
                                     <p class="text-xs text-gray-500 capitalize">{{ Auth::user()->role }}</p>
                                 </div>
-                                <div class="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
-                                    <i class="bi bi-person-fill text-white"></i>
+                                <div class="w-10 h-10 bg-primary rounded-full flex items-center justify-center overflow-hidden shadow-inner">
+                                    @if(Auth::user()->avatar)
+                                        <img src="{{ asset('storage/' . Auth::user()->avatar) }}" class="w-full h-full object-cover">
+                                    @else
+                                        <i class="bi bi-person-fill text-white"></i>
+                                    @endif
                                 </div>
                                 <i class="bi bi-chevron-down text-gray-500 text-xs"></i>
                             </button>
 
                             {{-- Dropdown Menu --}}
                             <div id="userDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
-                                <!-- <a href="#" class="flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">
+                                <a href="{{ route('profile.index') }}" class="flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">
                                     <i class="bi bi-person"></i>
-                                    <span>Profil</span>
+                                    <span>Profil Saya</span>
                                 </a>
-                                <a href="#" class="flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">
-                                    <i class="bi bi-gear"></i>
-                                    <span>Pengaturan</span>
-                                </a> -->
-                                <!-- <hr class="my-2"> -->
+                                <hr class="my-2 border-gray-100">
                                 <form method="POST" action="{{ route('logout') }}">
                                     @csrf
                                     {{-- Ganti type="submit" jadi type="button" dan tambah onclick --}}

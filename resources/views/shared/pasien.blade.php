@@ -1,4 +1,4 @@
-{{-- resources/views/admin/pasien.blade.php --}}
+{{-- resources/views/petugas/pasien.blade.php --}}
 
 @extends('layouts.app')
 
@@ -11,16 +11,16 @@
         {{-- Header Halaman --}}
         <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
             <h1 class="text-3xl font-bold text-gray-800 flex items-center">
-                <i class="bi bi-people-fill text-primary mr-3"></i> Manajemen Data Pasien
+                <i class="bi bi-people-fill text-yellow-600 mr-3"></i> Manajemen Data Pasien
             </h1>
             
             {{-- Tombol Add (Memanggil Modal) --}}
-            <button onclick="openModal('modalAddPasien')" class="bg-primary hover:bg-secondary text-white font-semibold py-2 px-5 rounded-xl transition-colors duration-300 flex items-center shadow-md hover:shadow-lg">
+            <button onclick="openModal('modalAddPasien')" class="bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-2 px-5 rounded-xl transition-colors duration-300 flex items-center shadow-md hover:shadow-lg">
                 <i class="bi bi-person-plus-fill mr-2"></i> Tambah Pasien Baru
             </button>
         </div>
 
-        {{-- Notifikasi Sukses & Error (Sama dengan obat.blade.php) --}}
+        {{-- Notifikasi Sukses & Error --}}
         @if (session('success'))
             <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-xl relative shadow-md" role="alert">
                 <strong class="font-bold">Berhasil!</strong>
@@ -43,38 +43,43 @@
         <div class="bg-white shadow-xl rounded-2xl p-6 border border-gray-100">
             
             {{-- Area Filter dan Pencarian --}}
-            <div class="flex flex-col md:flex-row justify-between items-center mb-6 space-y-4 md:space-y-0">
+            <form action="{{ url(request()->segment(1).'/pasien') }}" method="GET" class="flex flex-col md:flex-row justify-between items-center mb-6 space-y-4 md:space-y-0 gap-4">
                 <div class="w-full md:w-1/3">
                     <div class="relative">
-                        <input type="text" placeholder="Cari berdasarkan Nama, NIK, atau BPJS..." 
-                            class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                            aria-label="Cari Pasien">
+                        <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari Nama, NIK, atau BPJS..." 
+                            class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all">
                         <i class="bi bi-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
                     </div>
                 </div>
 
                 <div class="flex items-center space-x-4">
-                    <select class="p-2 border border-gray-300 rounded-xl text-sm focus:ring-primary focus:border-primary transition-colors">
-                        <option>Semua Jenis Kelamin</option>
-                        <option>Laki-laki</option>
-                        <option>Perempuan</option>
+                    <select name="gender" onchange="this.form.submit()" class="p-2 border border-gray-300 rounded-xl text-sm focus:ring-yellow-500 focus:border-yellow-500 transition-colors">
+                        <option value="">Semua Jenis Kelamin</option>
+                        <option value="L" {{ request('gender') == 'L' ? 'selected' : '' }}>Laki-laki</option>
+                        <option value="P" {{ request('gender') == 'P' ? 'selected' : '' }}>Perempuan</option>
                     </select>
 
-                    <select class="p-2 border border-gray-300 rounded-xl text-sm focus:ring-primary focus:border-primary transition-colors hidden sm:block">
-                        <option>Semua Gol. Darah</option>
-                        <option>A</option>
-                        <option>B</option>
-                        <option>AB</option>
-                        <option>O</option>
+                    <select name="blood_type" onchange="this.form.submit()" class="p-2 border border-gray-300 rounded-xl text-sm focus:ring-yellow-500 focus:border-yellow-500 transition-colors hidden sm:block">
+                        <option value="">Semua Gol. Darah</option>
+                        @foreach(['A', 'B', 'AB', 'O'] as $bt)
+                            <option value="{{ $bt }}" {{ request('blood_type') == $bt ? 'selected' : '' }}>{{ $bt }}</option>
+                        @endforeach
                     </select>
+
+                    @if(request()->anyFilled(['search', 'gender', 'blood_type']))
+                        <a href="{{ url(request()->segment(1).'/pasien') }}" class="text-red-500 hover:text-red-700 text-sm font-semibold">
+                            <i class="bi bi-x-circle"></i> Reset
+                        </a>
+                    @endif
                 </div>
-            </div>
+            </form>
 
             {{-- Tabel Data Pasien (Struktur mirip obat.blade.php) --}}
             <div class="overflow-x-auto rounded-xl border border-gray-200">
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-10">No</th>
                             <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-20">NIK</th>
                             <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Nama Pasien</th>
                             <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider hidden sm:table-cell">Kontak (HP)</th>
@@ -87,7 +92,10 @@
                         
                         @forelse($patients as $patient)
                         <tr class="hover:bg-gray-50 transition-colors">
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-primary">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {{ $patients->firstItem() + $loop->index }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-yellow-600">
                                 {{ $patient->nik }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
@@ -117,7 +125,7 @@
                             <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
                                 <div class="flex justify-center space-x-1.5">
                                     
-                                    {{-- Data JSON tunggal Pasien (Sama seperti obat.blade.php) --}}
+                                    {{-- Data JSON tunggal Pasien --}}
                                     @php
                                         $dataJson = [
                                             'id' => $patient->id,
@@ -140,7 +148,7 @@
                                         data-patient='@json($dataJson)'
                                         onclick="viewPasienFromData(this)" 
                                         title="Lihat Detail Pasien" 
-                                        class="text-primary hover:text-secondary p-1.5 rounded-full hover:bg-gray-100 transition-colors">
+                                        class="text-gray-600 hover:text-gray-800 p-1.5 rounded-full hover:bg-gray-100 transition-colors">
                                         <i class="bi bi-eye text-lg"></i>
                                     </button>
                                     
@@ -163,7 +171,7 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="6" class="px-6 py-10 text-center text-gray-500">
+                            <td colspan="7" class="px-6 py-10 text-center text-gray-500">
                                 Tidak ada data pasien yang ditemukan.
                             </td>
                         </tr>
@@ -177,6 +185,7 @@
             <div class="mt-6 flex justify-between items-center">
                 <p class="text-sm text-gray-600 hidden sm:block">Menampilkan {{ $patients->firstItem() ?? 0 }} - {{ $patients->lastItem() ?? 0 }} dari {{ $patients->total() }} pasien</p>
                 <div class="flex space-x-2 ml-auto">
+                    {{-- Ini akan otomatis mengambil data pagination --}}
                     {{ $patients->links('pagination::tailwind') }} 
                 </div>
             </div>
@@ -185,13 +194,17 @@
 
     </div>
 
-    {{-- Modal Tambah Pasien Baru (Mirip Modal Add Obat) --}}
+    {{-- =================================================================
+        MODAL TAMBAH, EDIT, VIEW, DELETE (DENGAN TEMA KUNING)
+    ================================================================== --}}
+
+    {{-- Modal Tambah Pasien Baru --}}
     <div id="modalAddPasien" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
             <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 rounded-t-2xl">
                 <div class="flex justify-between items-center">
                     <h2 class="text-2xl font-bold text-gray-800 flex items-center">
-                        <i class="bi bi-person-plus-fill text-primary mr-3"></i> Tambah Pasien Baru
+                        <i class="bi bi-person-plus-fill text-yellow-600 mr-3"></i> Tambah Pasien Baru
                     </h2>
                     <button type="button" onclick="closeModal('modalAddPasien')" class="text-gray-400 hover:text-gray-600 transition-colors">
                         <i class="bi bi-x-lg text-2xl"></i>
@@ -199,39 +212,40 @@
                 </div>
             </div>
             
-            <form id="formAddPasien" action="{{ route('admin.pasien.store') }}" method="POST" class="p-6 space-y-4">
+            {{-- Form action disesuaikan --}}
+            <form id="formAddPasien" action="{{ url(request()->segment(1).'/pasien') }}" method="POST" class="p-6 space-y-4">
                 @csrf
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-2">Nama Lengkap <span class="text-red-500">*</span></label>
                         <input type="text" name="name" placeholder="Nama Pasien" required value="{{ old('name') }}"
-                            class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all">
+                            class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all">
                     </div>
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-2">Email (Login) <span class="text-red-500">*</span></label>
                         <input type="email" name="email" placeholder="email@contoh.com" required value="{{ old('email') }}"
-                            class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all">
+                            class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all">
                     </div>
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-2">Password <span class="text-red-500">*</span></label>
                         <input type="password" name="password" placeholder="Minimal 8 Karakter" required
-                            class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all">
+                            class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all">
                     </div>
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-2">Konfirmasi Password <span class="text-red-500">*</span></label>
                         <input type="password" name="password_confirmation" placeholder="Ulangi Password" required
-                            class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all">
+                            class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all">
                     </div>
 
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-2">NIK <span class="text-red-500">*</span></label>
                         <input type="text" name="nik" placeholder="Nomor Induk Kependudukan" required value="{{ old('nik') }}"
-                            class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all">
+                            class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all">
                     </div>
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-2">No. BPJS (Opsional)</label>
                         <input type="text" name="no_bpjs" placeholder="Nomor BPJS" value="{{ old('no_bpjs') }}"
-                            class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all">
+                            class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all">
                     </div>
                 </div>
 
@@ -239,12 +253,12 @@
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-2">Tgl. Lahir <span class="text-red-500">*</span></label>
                         <input type="date" name="tanggal_lahir" required value="{{ old('tanggal_lahir') }}"
-                            class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all">
+                            class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all">
                     </div>
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-2">Jenis Kelamin <span class="text-red-500">*</span></label>
                         <select name="jenis_kelamin" required
-                            class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all">
+                            class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all">
                             <option value="">Pilih J. Kelamin</option>
                             <option value="L" @selected(old('jenis_kelamin') == 'L')>Laki-laki</option>
                             <option value="P" @selected(old('jenis_kelamin') == 'P')>Perempuan</option>
@@ -253,7 +267,7 @@
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-2">Gol. Darah (Opsional)</label>
                         <select name="gol_darah"
-                            class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all">
+                            class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all">
                             <option value="">Pilih Gol. Darah</option>
                             <option value="A" @selected(old('gol_darah') == 'A')>A</option>
                             <option value="B" @selected(old('gol_darah') == 'B')>B</option>
@@ -266,13 +280,13 @@
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Nomor HP (Opsional)</label>
                     <input type="text" name="no_hp" placeholder="Contoh: 0812xxxx" value="{{ old('no_hp') }}"
-                        class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all">
+                        class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all">
                 </div>
 
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Alamat Lengkap <span class="text-red-500">*</span></label>
                     <textarea name="alamat" rows="3" placeholder="Masukkan alamat lengkap" required
-                        class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all">{{ old('alamat') }}</textarea>
+                        class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all">{{ old('alamat') }}</textarea>
                 </div>
 
                 <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
@@ -281,7 +295,7 @@
                         Batal
                     </button>
                     <button type="submit"
-                        class="px-6 py-2 bg-primary text-white rounded-xl hover:bg-secondary transition-colors font-semibold shadow-md hover:shadow-lg">
+                        class="px-6 py-2 bg-yellow-500 text-white rounded-xl hover:bg-yellow-600 transition-colors font-semibold shadow-md hover:shadow-lg">
                         <i class="bi bi-check-lg mr-2"></i> Simpan Data Pasien
                     </button>
                 </div>
@@ -289,7 +303,7 @@
         </div>
     </div>
 
-    {{-- Modal Edit Pasien (Mirip Modal Edit Obat) --}}
+    {{-- Modal Edit Pasien --}}
     <div id="modalEditPasien" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
             <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 rounded-t-2xl">
@@ -314,33 +328,33 @@
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-2">Nama Lengkap <span class="text-red-500">*</span></label>
                         <input type="text" id="edit_name" name="name" required
-                            class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all">
+                            class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all">
                     </div>
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-2">Email (Login) <span class="text-red-500">*</span></label>
                         <input type="email" id="edit_email" name="email" required
-                            class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all">
+                            class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all">
                     </div>
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-2">Password Baru (Kosongkan jika tidak diganti)</label>
                         <input type="password" name="password" placeholder="Minimal 8 Karakter"
-                            class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all">
+                            class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all">
                     </div>
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-2">Konfirmasi Password</label>
                         <input type="password" name="password_confirmation" placeholder="Ulangi Password"
-                            class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all">
+                            class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all">
                     </div>
 
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-2">NIK <span class="text-red-500">*</span></label>
                         <input type="text" id="edit_nik" name="nik" required
-                            class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all">
+                            class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all">
                     </div>
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-2">No. BPJS (Opsional)</label>
                         <input type="text" id="edit_no_bpjs" name="no_bpjs" placeholder="Nomor BPJS"
-                            class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all">
+                            class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all">
                     </div>
                 </div>
 
@@ -348,12 +362,12 @@
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-2">Tgl. Lahir <span class="text-red-500">*</span></label>
                         <input type="date" id="edit_tanggal_lahir" name="tanggal_lahir" required
-                            class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all">
+                            class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all">
                     </div>
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-2">Jenis Kelamin <span class="text-red-500">*</span></label>
                         <select id="edit_jenis_kelamin" name="jenis_kelamin" required
-                            class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all">
+                            class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all">
                             <option value="">Pilih J. Kelamin</option>
                             <option value="L">Laki-laki</option>
                             <option value="P">Perempuan</option>
@@ -362,7 +376,7 @@
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-2">Gol. Darah (Opsional)</label>
                         <select id="edit_gol_darah" name="gol_darah"
-                            class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all">
+                            class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all">
                             <option value="">Pilih Gol. Darah</option>
                             <option value="A">A</option>
                             <option value="B">B</option>
@@ -375,13 +389,13 @@
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Nomor HP (Opsional)</label>
                     <input type="text" id="edit_no_hp" name="no_hp" placeholder="Contoh: 0812xxxx"
-                        class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all">
+                        class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all">
                 </div>
 
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Alamat Lengkap <span class="text-red-500">*</span></label>
                     <textarea id="edit_alamat" name="alamat" rows="3" placeholder="Masukkan alamat lengkap" required
-                        class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all"></textarea>
+                        class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all"></textarea>
                 </div>
 
                 <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
@@ -398,13 +412,13 @@
         </div>
     </div>
 
-    {{-- Modal View Detail Pasien (Mirip Modal View Obat) --}}
+    {{-- Modal View Detail Pasien --}}
     <div id="modalViewPasien" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 rounded-t-2xl">
                 <div class="flex justify-between items-center">
                     <h2 class="text-2xl font-bold text-gray-800 flex items-center">
-                        <i class="bi bi-person-badge text-primary mr-3"></i> Detail Data Pasien
+                        <i class="bi bi-person-badge text-yellow-600 mr-3"></i> Detail Data Pasien
                     </h2>
                     <button type="button" onclick="closeModal('modalViewPasien')" class="text-gray-400 hover:text-gray-600 transition-colors">
                         <i class="bi bi-x-lg text-2xl"></i>
@@ -413,11 +427,11 @@
             </div>
             
             <div class="p-6 space-y-6">
-                <div class="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-xl p-5">
+                <div class="bg-gradient-to-r from-yellow-500/10 to-yellow-600/10 rounded-xl p-5">
                     <div class="flex justify-between items-start">
                         <div>
                             <p class="text-xs text-gray-500 uppercase font-semibold mb-1">NIK (Nomor Identitas)</p>
-                            <p id="view_nik" class="text-2xl font-bold text-primary">-</p>
+                            <p id="view_nik" class="text-2xl font-bold text-yellow-700">-</p>
                         </div>
                         <span id="view_bpjs_status" class="bg-red-100 text-red-800 px-3 py-1 rounded-full text-xs font-semibold">
                             NON-BPJS
@@ -477,7 +491,7 @@
         </div>
     </div>
 
-    {{-- Modal Konfirmasi Hapus Pasien (Mirip Modal Delete Obat) --}}
+    {{-- Modal Konfirmasi Hapus Pasien --}}
     <div id="modalDeletePasien" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md">
             <div class="p-6">
@@ -512,19 +526,12 @@
     <script>
         let currentPasienData = null;
 
-        // FUNGSI UTILITY (Diambil dari obat.blade.php)
+        // FUNGSI UTILITY
         function openModal(modalId) {
             const modal = document.getElementById(modalId);
             modal.classList.remove('hidden');
             modal.classList.add('flex');
             document.body.style.overflow = 'hidden';
-
-            // Logic untuk menampilkan modal Add jika ada error validasi
-            @if ($errors->any() && old('nik'))
-                if (modalId === 'modalAddPasien') {
-                    // Cukup buka modal, karena old() sudah mengisi data
-                }
-            @endif
         }
 
         function closeModal(modalId) {
@@ -548,7 +555,7 @@
             return date.toLocaleDateString('id-ID', options);
         }
 
-        // FUNGSI MEMBACA DATA DARI ATTRIBUTE (Pasien Handlers - Diambil dari obat.blade.php logic)
+        // FUNGSI MEMBACA DATA DARI ATTRIBUTE
         function viewPasienFromData(buttonElement) {
             const dataString = buttonElement.getAttribute('data-patient');
             const data = JSON.parse(dataString);
@@ -561,7 +568,7 @@
             editPasien(data);
         }
 
-        // 1. View Pasien (Logika utama - Disesuaikan dengan data Pasien)
+        // 1. View Pasien
         function viewPasien(data) {
             currentPasienData = data;
             
@@ -599,13 +606,12 @@
             openModal('modalViewPasien');
         }
 
-        // 2. Edit Pasien (Logika utama - Disesuaikan dengan data Pasien)
+        // 2. Edit Pasien
         function editPasien(data) {
             currentPasienData = data;
             
             const form = document.getElementById('formEditPasien');
-            // FIX FINAL: Menggunakan URI Statis sesuai route Pasien
-            form.action = "{{ url('admin/pasien') }}/" + data.id; 
+            form.action = "{{ url(request()->segment(1).'/pasien') }}/" + data.id;
             
             document.getElementById('edit_id').value = data.id; 
             document.getElementById('edit_user_id').value = data.user_id;
@@ -622,40 +628,20 @@
             openModal('modalEditPasien');
         }
 
-        // 3. Delete Pasien (Konfirmasi - Disesuaikan dengan data Pasien)
+        // 3. Delete Pasien (Konfirmasi)
         function deletePasien(id, info) {
             document.getElementById('delete_pasien_info').textContent = info;
             
             const form = document.getElementById('formDeletePasien');
-            // FIX FINAL: Menggunakan URI Statis sesuai route Pasien
-            form.action = "{{ url('admin/pasien') }}/" + id; 
+            form.action = "{{ url(request()->segment(1).'/pasien') }}/" + id;
             
             openModal('modalDeletePasien');
         }
         
-        // Event listener saat halaman dimuat (Sama)
+        // Event listener saat halaman dimuat
         document.addEventListener('DOMContentLoaded', function() {
-            // Tutup modal ketika klik di luar modal
-            document.querySelectorAll('[id^="modal"]').forEach(modal => {
-                modal.addEventListener('click', function(e) {
-                    if (e.target === this) {
-                        closeModal(this.id);
-                    }
-                });
-            });
-
-            // Keyboard shortcut - ESC untuk menutup modal
-            document.addEventListener('keydown', function(e) {
-                if (e.key === 'Escape') {
-                    const openModals = document.querySelectorAll('[id^="modal"]:not(.hidden)');
-                    openModals.forEach(modal => {
-                        closeModal(modal.id);
-                    });
-                }
-            });
-
             // LOGIC MENAMPILKAN MODAL TAMBAH JIKA ADA VALIDASI ERROR
-            @if ($errors->any() && old('nik'))
+            @if ($errors->any() && old('nik')) // 'nik' adalah field unik di form add
                 openModal('modalAddPasien');
             @endif
         });

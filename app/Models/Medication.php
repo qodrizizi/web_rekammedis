@@ -31,6 +31,6 @@ class Medication extends Model
     // Konversi tipe data untuk kolom harga
     protected $casts = [
         'harga' => 'decimal:2',
-        
+        'tanggal_kedaluwarsa' => 'date',
     ];
 }

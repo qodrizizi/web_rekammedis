@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Role;
+use App\Models\Permission;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Carbon\Carbon;
@@ -15,9 +16,10 @@ class RoleController extends Controller
     public function index()
     {
         // Ambil data role dan lakukan pagination
-        $roles = Role::latest()->paginate(10); 
+        $roles = Role::with('permissions')->latest()->paginate(10); 
+        $all_permissions = Permission::all()->groupBy('group');
 
-        return view('admin.roles', compact('roles'));
+        return view('admin.roles', compact('roles', 'all_permissions'));
     }
 
     /**
@@ -28,9 +30,14 @@ class RoleController extends Controller
         $validated = $request->validate([
             'role_name' => 'required|string|max:50|unique:roles,role_name',
             'description' => 'nullable|string',
+            'permissions' => 'nullable|array',
         ]);
 
-        Role::create($validated);
+        $role = Role::create($validated);
+        
+        if ($request->has('permissions')) {
+            $role->permissions()->sync($request->permissions);
+        }
         
         return redirect()->route('admin.roles')->with('success', 'Hak Akses baru berhasil ditambahkan.');
     }
@@ -40,9 +47,6 @@ class RoleController extends Controller
      */
     public function update(Request $request, Role $role) 
     {
-        // PENTING: Role dasar (Admin, Dokter, Petugas, Pasien) sebaiknya tidak diizinkan diubah namanya.
-        // Jika Anda ingin melindungi ID 1-4, tambahkan logika di sini.
-
         $validated = $request->validate([
             'role_name' => [
                 'required',
@@ -51,9 +55,16 @@ class RoleController extends Controller
                 Rule::unique('roles', 'role_name')->ignore($role->id),
             ],
             'description' => 'nullable|string',
+            'permissions' => 'nullable|array',
         ]);
         
         $role->update($validated);
+
+        if ($request->has('permissions')) {
+            $role->permissions()->sync($request->permissions);
+        } else {
+            $role->permissions()->detach();
+        }
 
         return redirect()->route('admin.roles')->with('success', 'Hak Akses berhasil diperbarui.');
     }

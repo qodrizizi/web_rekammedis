@@ -33,6 +33,7 @@ class AuthController extends Controller
                 case 2: return redirect()->route('dokter.dashboard');
                 case 3: return redirect()->route('petugas.dashboard');
                 case 4: return redirect()->route('pasien.dashboard');
+                case 5: return redirect()->route('admin.dashboard'); // Superadmin ke dashboard admin
                 default: return redirect()->route('login');
             }
         }

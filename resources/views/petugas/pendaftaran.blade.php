@@ -44,8 +44,12 @@
 
         {{-- Main Form Container dengan Alpine.js --}}
         <div x-data="{ 
-            activeTab: 'new_patient',
+            activeTab: localStorage.getItem('pendaftaran_active_tab') || 'new_patient',
+            hasSearched: false,
             
+            init() {
+                this.$watch('activeTab', value => localStorage.setItem('pendaftaran_active_tab', value));
+            },
             // Data Dinamis
             // Data $clinics ini didapat dari PendaftaranController@index
             allClinics: {{ $clinics->isEmpty() ? '[]' : $clinics->toJson() }},
@@ -104,6 +108,7 @@
                 
                 this.isSearching = true;
                 this.isPatientFound = false;
+                this.hasSearched = false;
 
                 // Panggil API route yang kita buat di web.php
                 fetch(`{{ route('petugas.api.search.patient') }}?q=${encodeURIComponent(this.patientSearchTerm)}`)
@@ -123,11 +128,13 @@
                         };
                         this.isPatientFound = true;
                         this.isSearching = false;
+                        this.hasSearched = true;
                     })
                     .catch(error => {
                         console.error('Error searching patient:', error);
                         this.isPatientFound = false;
                         this.isSearching = false;
+                        this.hasSearched = true;
                     });
             },
             
@@ -138,6 +145,7 @@
                 this.selectedClinicOld = '';
                 this.selectedDoctorOld = '';
                 this.doctors = [];
+                this.hasSearched = false;
             },
             
             resetNewPatientForm() {
@@ -158,7 +166,7 @@
                             : 'text-gray-600 hover:text-indigo-600 hover:bg-gray-100'"
                         class="flex-1 py-4 px-6 inline-flex items-center justify-center text-base rounded-t-lg transition-all duration-200">
                         <i class="bi bi-person-plus-fill mr-2 text-xl"></i> 
-                        <span class="hidden sm:inline">Pasien</span> BARU
+                        <span>Admisi Pasien Baru</span>
                     </button>
                     
                     {{-- Tab Pasien LAMA --}}
@@ -169,7 +177,7 @@
                             : 'text-gray-600 hover:text-indigo-600 hover:bg-gray-100'"
                         class="flex-1 py-4 px-6 inline-flex items-center justify-center text-base rounded-t-lg transition-all duration-200">
                         <i class="bi bi-calendar-check-fill mr-2 text-xl"></i> 
-                        Kunjungan <span class="hidden sm:inline">Pasien</span> LAMA
+                        <span>Admisi Kunjungan Lama</span>
                     </button>
                 </nav>
             </div>
@@ -193,7 +201,7 @@
                             <i class="bi bi-person-plus text-indigo-600 text-2xl"></i>
                         </div>
                         <div>
-                            <h2 class="text-2xl font-bold text-gray-800">Data Pasien Baru</h2>
+                            <h2 class="text-2xl font-bold text-gray-800">Admisi Pasien Baru</h2>
                             <p class="text-gray-600 text-sm">Lengkapi formulir untuk pendaftaran pertama kali</p>
                         </div>
                     </div>
@@ -375,7 +383,7 @@
                             <i class="bi bi-calendar-check text-yellow-600 text-2xl"></i>
                         </div>
                         <div>
-                            <h2 class="text-2xl font-bold text-gray-800">Kunjungan Pasien Lama</h2>
+                            <h2 class="text-2xl font-bold text-gray-800">Admisi Kunjungan Lama</h2>
                             <p class="text-gray-600 text-sm">Cari data pasien yang sudah terdaftar</p>
                         </div>
                     </div>
@@ -390,7 +398,7 @@
                         <form @submit.prevent="searchPatient()" class="flex flex-col sm:flex-row gap-3">
                             <input type="text" 
                                 x-model="patientSearchTerm" 
-                                @keydown.enter.prevent="searchPatient()"
+                                @input="hasSearched = false"
                                 placeholder="Masukkan NIK atau Nama Pasien" 
                                 class="flex-grow px-4 py-3 border-2 border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
                             <button type="submit" 
@@ -523,7 +531,7 @@
                     </div>
 
                     {{-- Hasil: Pasien Tidak Ditemukan --}}
-                    <div x-show="!isPatientFound && patientSearchTerm.length > 0 && !isSearching" 
+                    <div x-show="!isPatientFound && hasSearched && !isSearching" 
                          x-transition:enter="transition ease-out duration-300"
                          x-transition:enter-start="opacity-0 scale-95"
                          x-transition:enter-end="opacity-100 scale-100"

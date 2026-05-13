@@ -106,6 +106,7 @@
                                             'id' => $role->id,
                                             'role_name' => $role->role_name,
                                             'description' => $role->description,
+                                            'permissions' => $role->permissions->pluck('id'),
                                             'created_at' => $role->created_at,
                                             'updated_at' => $role->updated_at,
                                         ];
@@ -190,8 +191,26 @@
                 
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Deskripsi / Keterangan</label>
-                    <textarea name="description" rows="4" placeholder="Deskripsi tugas dan hak akses role ini"
+                    <textarea name="description" rows="3" placeholder="Deskripsi tugas dan hak akses role ini"
                         class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all">{{ old('description') }}</textarea>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-3 text-primary border-b pb-1">Hak Akses Menu (Permissions)</label>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[300px] overflow-y-auto p-2 border border-gray-100 rounded-xl bg-gray-50">
+                        @foreach($all_permissions as $group => $perms)
+                            <div class="space-y-2">
+                                <h4 class="text-xs font-bold text-gray-500 uppercase tracking-widest">{{ $group }}</h4>
+                                @foreach($perms as $perm)
+                                    <label class="flex items-center space-x-3 p-2 hover:bg-white rounded-lg cursor-pointer transition-colors border border-transparent hover:border-gray-200">
+                                        <input type="checkbox" name="permissions[]" value="{{ $perm->id }}" 
+                                            class="w-5 h-5 text-primary border-gray-300 rounded focus:ring-primary transition-all">
+                                        <span class="text-sm text-gray-700">{{ $perm->name }}</span>
+                                    </label>
+                                @endforeach
+                            </div>
+                        @endforeach
+                    </div>
                 </div>
 
                 <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
@@ -236,8 +255,26 @@
                 
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Deskripsi / Keterangan</label>
-                    <textarea id="edit_description" name="description" rows="4" placeholder="Deskripsi tugas dan hak akses role ini"
+                    <textarea id="edit_description" name="description" rows="3" placeholder="Deskripsi tugas dan hak akses role ini"
                         class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-3 text-primary border-b pb-1">Hak Akses Menu (Permissions)</label>
+                    <div id="edit_permissions_container" class="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[300px] overflow-y-auto p-2 border border-gray-100 rounded-xl bg-gray-50">
+                        @foreach($all_permissions as $group => $perms)
+                            <div class="space-y-2">
+                                <h4 class="text-xs font-bold text-gray-500 uppercase tracking-widest">{{ $group }}</h4>
+                                @foreach($perms as $perm)
+                                    <label class="flex items-center space-x-3 p-2 hover:bg-white rounded-lg cursor-pointer transition-colors border border-transparent hover:border-gray-200">
+                                        <input type="checkbox" name="permissions[]" value="{{ $perm->id }}" id="perm_edit_{{ $perm->id }}"
+                                            class="w-5 h-5 text-primary border-gray-300 rounded focus:ring-primary transition-all checkbox-perm">
+                                        <span class="text-sm text-gray-700">{{ $perm->name }}</span>
+                                    </label>
+                                @endforeach
+                            </div>
+                        @endforeach
+                    </div>
                 </div>
 
                 <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
@@ -422,6 +459,25 @@
             document.getElementById('edit_id').value = data.id; 
             document.getElementById('edit_role_name').value = data.role_name;
             document.getElementById('edit_description').value = data.description;
+
+            // Reset checkboxes
+            document.querySelectorAll('.checkbox-perm').forEach(cb => cb.checked = false);
+            
+            // Check permissions
+            if (data.permissions && Array.isArray(data.permissions)) {
+                data.permissions.forEach(permId => {
+                    const cb = document.getElementById('perm_edit_' + permId);
+                    if (cb) cb.checked = true;
+                });
+            }
+
+            // Disable editing for Superadmin (Role ID 5)
+            const isSuperadmin = (data.role_name === 'Superadmin' || data.id == 5);
+            document.getElementById('edit_role_name').disabled = isSuperadmin;
+            document.getElementById('edit_description').disabled = isSuperadmin;
+            document.querySelectorAll('#edit_permissions_container input').forEach(input => {
+                input.disabled = isSuperadmin;
+            });
             
             openModal('modalEditRole');
         }

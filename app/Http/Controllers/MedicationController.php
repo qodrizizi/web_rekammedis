@@ -2,96 +2,170 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Medication; 
+use App\Models\Medication;
+use App\Models\Appointment;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
+use Carbon\Carbon;
 
 class MedicationController extends Controller
 {
     /**
-     * Menampilkan daftar semua data obat.
+     * Menampilkan halaman manajemen obat dengan statistik.
      */
-    public function index()
+    public function index(Request $request)
     {
-        // Ambil semua data obat dari database, diurutkan berdasarkan nama
-        $medications = Medication::orderBy('nama_obat')->get();
+        $query = Medication::query();
+
+        // Fitur Filter: Pencarian (Nama Obat / Kode Obat)
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('nama_obat', 'like', "%{$search}%")
+                  ->orWhere('kode_obat', 'like', "%{$search}%");
+            });
+        }
+
+        // Fitur Filter: Status (Stok Kritis / Akan Kadaluarsa)
+        if ($request->filled('filter')) {
+            $filter = $request->filter;
+            if ($filter === 'stok_kritis') {
+                $query->whereColumn('stok', '<=', 'stok_minimum');
+            } elseif ($filter === 'kadaluarsa') {
+                $query->whereNotNull('tanggal_kedaluwarsa')
+                      ->where('tanggal_kedaluwarsa', '<=', Carbon::now()->addDays(60));
+            }
+        }
+
+        $medications = $query->latest()->paginate(10)->withQueryString();
+
+        $stokKritisCount = Medication::whereColumn('stok', '<=', 'stok_minimum')->count();
         
-        // View disesuaikan dengan rute '/admin/obat'
-        return view('admin.obat', compact('medications'));
+        $kadaluarsaCount = Medication::whereNotNull('tanggal_kedaluwarsa')
+                                     ->where('tanggal_kedaluwarsa', '<=', Carbon::now()->addDays(60))
+                                     ->count();
+        
+        $totalJenisObat = Medication::count();
+
+        // Asumsi: 'disetujui' berarti resep dari dokter yang menunggu diambil/disiapkan
+        $resepMenungguCount = Appointment::where('status', 'disetujui')->count(); 
+        
+        // Mengambil log stok terbaru (dari tabel activity_logs)
+        $stockLogs = \App\Models\ActivityLog::with('user')
+                        ->where('deskripsi', 'like', '%Obat%')
+                        ->latest('waktu')
+                        ->take(50)
+                        ->get();
+
+        // Master Data Satuan (Bisa diubah jadi dari Database jika dibutuhkan nanti)
+        $masterSatuan = [
+            'Tablet', 'Kapsul', 'Kaplet', 'Pil', 'Bungkus', 'Sachet',
+            'Sirup / Botol', 'Suspensi / Botol', 'Drops / Botol', 
+            'Salep / Tube', 'Krim / Tube', 'Gel / Tube',
+            'Ampul', 'Vial', 'Infus', 'Suppositoria', 'Ovula',
+            'Strip', 'Blister', 'Box', 'Karton', 'Pcs', 'Roll', 'Fles'
+        ];
+        sort($masterSatuan);
+
+        return view('shared.obat', compact(
+            'medications', 
+            'stokKritisCount', 
+            'kadaluarsaCount', 
+            'totalJenisObat', 
+            'resepMenungguCount',
+            'stockLogs',
+            'masterSatuan'
+        ));
     }
 
     /**
-     * Menyimpan data obat baru.
+     * Menyimpan data obat baru dari modal.
      */
     public function store(Request $request)
     {
-        // PENTING: Validasi 'code' sebagai kode_obat yang unik
-        $request->validate([
-            'code' => 'required|string|max:100|unique:medications,kode_obat',
-            'name' => 'required|string|max:150',
-            'category' => 'nullable|string|max:100',
-            'stock' => 'required|integer|min:0',
-            'unit_price' => 'required|numeric|min:0',
-            'exp_date' => 'required|date',
-            'description' => 'nullable|string', // Validasi untuk form, meskipun kolomnya mungkin tidak terpakai
-            'unit' => 'required|string|max:50', 
+        $validated = $request->validate([
+            'kode_obat' => 'required|string|max:20|unique:medications,kode_obat',
+            'nama_obat' => 'required|string|max:150',
+            'satuan' => 'required|string|max:50',
+            'stok' => 'required|integer|min:0',
+            'stok_minimum' => 'required|integer|min:0',
+            'harga' => 'required|numeric|min:0',
+            'tanggal_kedaluwarsa' => 'nullable|date',
         ]);
 
-        Medication::create([
-            'kode_obat' => $request->code, // <-- Pastikan ini memetakan input 'code' ke kolom DB 'kode_obat'
-            'nama_obat' => $request->name,
-            'kategori' => $request->category,
-            'stok' => $request->stock,
-            'harga' => $request->unit_price,
-            'tanggal_kedaluwarsa' => $request->exp_date,
-            'satuan' => $request->unit,
-            'deskripsi' => $request->description,
+        $med = Medication::create($validated);
+
+        // Catat Log
+        \App\Models\ActivityLog::create([
+            'user_id' => auth()->id(),
+            'aksi' => 'Tambah Obat',
+            'deskripsi' => "Menambahkan obat baru: {$med->nama_obat} (Stok awal: {$med->stok})",
+            'waktu' => now()
         ]);
 
-        // Redirect ke route 'admin.obat'
-        return redirect()->route('admin.obat')->with('success', 'Data obat berhasil ditambahkan!');
+        return redirect()->back()->with('success', 'Obat baru berhasil ditambahkan.');
     }
 
     /**
-     * Memperbarui data obat.
+     * Update data obat dari modal.
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, Medication $medication)
     {
-        $medication = Medication::findOrFail($id);
-
-        $request->validate([
-            'name' => 'required|string|max:150',
-            'category' => 'nullable|string|max:100',
-            'stock' => 'required|integer|min:0',
-            'unit_price' => 'required|numeric|min:0',
-            'exp_date' => 'required|date',
-            'description' => 'nullable|string',
-            'unit' => 'required|string|max:50', 
+        $validated = $request->validate([
+            'kode_obat' => [
+                'required', 'string', 'max:20',
+                Rule::unique('medications')->ignore($medication->id),
+            ],
+            'nama_obat' => 'required|string|max:150',
+            'satuan' => 'required|string|max:50',
+            'stok' => 'required|integer|min:0',
+            'stok_minimum' => 'required|integer|min:0',
+            'harga' => 'required|numeric|min:0',
+            'tanggal_kedaluwarsa' => 'nullable|date',
         ]);
+
+        $stokLama = $medication->stok;
+        $medication->update($validated);
         
-        $medication->update([
-            'nama_obat' => $request->name,
-            'kategori' => $request->category,
-            'stok' => $request->stock,
-            'harga' => $request->unit_price,
-            'tanggal_kedaluwarsa' => $request->exp_date,
-            'satuan' => $request->unit,
-            'deskripsi' => $request->description,
-        ]);
+        // Catat Log jika stok berubah
+        if ($stokLama != $medication->stok) {
+            \App\Models\ActivityLog::create([
+                'user_id' => auth()->id(),
+                'aksi' => 'Update Stok Obat',
+                'deskripsi' => "Memperbarui stok obat: {$medication->nama_obat} dari {$stokLama} menjadi {$medication->stok}",
+                'waktu' => now()
+            ]);
+        } else {
+             \App\Models\ActivityLog::create([
+                'user_id' => auth()->id(),
+                'aksi' => 'Update Data Obat',
+                'deskripsi' => "Memperbarui data obat: {$medication->nama_obat}",
+                'waktu' => now()
+            ]);
+        }
 
-        // Redirect ke route 'admin.obat'
-        return redirect()->route('admin.obat')->with('success', 'Data obat berhasil diupdate!');
+        return redirect()->back()->with('success', 'Data obat berhasil diperbarui.');
     }
 
     /**
-     * Menghapus data obat.
+     * Hapus data obat.
      */
-    public function destroy($id)
+    public function destroy(Medication $medication)
     {
-        $medication = Medication::findOrFail($id);
-        $medication->delete();
+        try {
+            $namaObat = $medication->nama_obat;
+            $medication->delete();
+            
+            \App\Models\ActivityLog::create([
+                'user_id' => auth()->id(),
+                'aksi' => 'Hapus Obat',
+                'deskripsi' => "Menghapus data obat: {$namaObat}",
+                'waktu' => now()
+            ]);
 
-        // Redirect ke route 'admin.obat'
-        return redirect()->route('admin.obat')->with('success', 'Data obat berhasil dihapus!');
+            return redirect()->back()->with('success', 'Data obat berhasil dihapus.');
+        } catch (\Exception $e) {
+            return back()->withErrors(['error' => 'Gagal menghapus obat: ' . $e->getMessage()]);
+        }
     }
 }

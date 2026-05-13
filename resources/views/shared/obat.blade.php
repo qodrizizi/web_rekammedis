@@ -16,10 +16,10 @@
                 <button onclick="openModal('modalAddObat')" class="bg-primary hover:bg-secondary text-white font-semibold py-2 px-5 rounded-xl transition-colors duration-300 flex items-center shadow-md hover:shadow-lg">
                     <i class="bi bi-plus-circle-fill mr-2"></i> Tambah Jenis Obat
                 </button>
-                {{-- Tombol Aksi: Lihat Riwayat Log (Non-aktif) --}}
-                <a href="#" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2 px-5 rounded-xl transition-colors duration-300 flex items-center shadow-md">
+                {{-- Tombol Aksi: Lihat Riwayat Log (Memanggil Modal) --}}
+                <button onclick="openModal('modalLogStok')" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2 px-5 rounded-xl transition-colors duration-300 flex items-center shadow-md">
                     <i class="bi bi-clock-history mr-2"></i> Log Stok
-                </a>
+                </button>
             </div>
         </div>
 
@@ -89,32 +89,42 @@
 
         <div class="bg-white shadow-xl rounded-2xl p-6 border border-gray-100">
             
-            <div class="flex flex-col md:flex-row justify-between items-center mb-6 space-y-4 md:space-y-0">
+            <form method="GET" action="{{ url(request()->segment(1).'/obat') }}" class="flex flex-col md:flex-row justify-between items-center mb-6 space-y-4 md:space-y-0">
                 
                 <div class="w-full md:w-1/3">
-                    <div class="relative">
-                        <input type="text" placeholder="Cari berdasarkan Nama Obat, Kode..." 
+                    <div class="relative flex items-center">
+                        <input type="text" name="search" placeholder="Cari berdasarkan Nama Obat, Kode..." value="{{ request('search') }}"
                             class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                             aria-label="Cari Obat">
-                        <i class="bi bi-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                        <i class="bi bi-search absolute left-3 text-gray-400"></i>
                     </div>
                 </div>
 
                 <div class="flex items-center space-x-4">
                     <span class="text-sm text-gray-600 hidden sm:block">Menampilkan {{ $medications->firstItem() ?? 0 }} - {{ $medications->lastItem() ?? 0 }} dari {{ $medications->total() }}</span>
                     
-                    <select class="p-2 border border-gray-300 rounded-xl text-sm focus:ring-primary focus:border-primary transition-colors">
-                        <option>Semua Kategori</option>
-                        <option>Stok Kritis</option>
-                        <option>Akan Kadaluarsa</option>
+                    <select name="filter" onchange="this.form.submit()" class="p-2 border border-gray-300 rounded-xl text-sm focus:ring-primary focus:border-primary transition-colors">
+                        <option value="">Semua Kategori</option>
+                        <option value="stok_kritis" @selected(request('filter') == 'stok_kritis')>Stok Kritis</option>
+                        <option value="kadaluarsa" @selected(request('filter') == 'kadaluarsa')>Akan Kadaluarsa</option>
                     </select>
+
+                    <button type="submit" class="bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 px-4 rounded-xl text-sm font-semibold transition-colors">
+                        Filter
+                    </button>
+                    @if(request()->anyFilled(['search', 'filter']))
+                        <a href="{{ url(request()->segment(1).'/obat') }}" class="text-sm text-red-500 hover:underline">Reset</a>
+                    @endif
                 </div>
-            </div>
+            </form>
 
             <div class="overflow-x-auto rounded-xl border border-gray-200">
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
+                            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-10">
+                                No
+                            </th>
                             <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-16">
                                 Kode
                             </th>
@@ -144,7 +154,9 @@
                             $isKadaluarsa = $med->tanggal_kedaluwarsa && $med->tanggal_kedaluwarsa->isBefore(now()->addDays(60));
                         @endphp
                         <tr class="hover:bg-gray-50 transition-colors @if($isKritis || $isKadaluarsa) bg-red-50/50 @endif">
-                            
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {{ $loop->iteration + $medications->firstItem() - 1 }}
+                            </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                 {{ $med->kode_obat }}
                             </td>
@@ -210,7 +222,7 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="6" class="px-6 py-10 text-center text-gray-500">
+                            <td colspan="7" class="px-6 py-10 text-center text-gray-500">
                                 Tidak ada data obat yang ditemukan.
                             </td>
                         </tr>
@@ -231,8 +243,64 @@
     </div>
 
     {{-- =================================================================
-        MODAL TAMBAH, EDIT, DELETE (Disalin dari Pasien, disesuaikan)
+        MODAL TAMBAH, EDIT, DELETE, LOG
     ================================================================== --}}
+
+    {{-- Modal Log Stok --}}
+    <div id="modalLogStok" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col">
+            <div class="bg-white border-b border-gray-200 px-6 py-4 rounded-t-2xl flex-shrink-0">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-2xl font-bold text-gray-800 flex items-center">
+                        <i class="bi bi-clock-history text-gray-600 mr-3"></i> Riwayat Log Stok Obat
+                    </h2>
+                    <button type="button" onclick="closeModal('modalLogStok')" class="text-gray-400 hover:text-gray-600 transition-colors">
+                        <i class="bi bi-x-lg text-2xl"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="p-6 overflow-y-auto flex-1">
+                <div class="relative border-l-2 border-gray-200 ml-3">
+                    @forelse($stockLogs ?? [] as $log)
+                    <div class="mb-8 ml-6 relative">
+                        <span class="absolute -left-9 top-1 flex items-center justify-center w-6 h-6 bg-blue-100 rounded-full ring-4 ring-white">
+                            @if(str_contains($log->aksi, 'Tambah'))
+                                <i class="bi bi-plus-circle text-blue-600 text-xs"></i>
+                            @elseif(str_contains($log->aksi, 'Hapus'))
+                                <i class="bi bi-trash text-red-600 text-xs"></i>
+                            @else
+                                <i class="bi bi-pencil text-yellow-600 text-xs"></i>
+                            @endif
+                        </span>
+                        <div class="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                            <div class="flex justify-between items-start mb-1">
+                                <h4 class="text-sm font-bold text-gray-900">{{ $log->aksi }}</h4>
+                                <span class="text-xs font-medium text-gray-500 bg-white px-2 py-1 rounded border border-gray-200 shadow-sm">
+                                    {{ \Carbon\Carbon::parse($log->waktu)->isoFormat('D MMM YYYY, HH:mm') }}
+                                </span>
+                            </div>
+                            <p class="text-sm text-gray-600 mb-2">{{ $log->deskripsi }}</p>
+                            <div class="text-xs text-gray-500 flex items-center">
+                                <i class="bi bi-person-fill mr-1"></i> {{ $log->user->name ?? 'Sistem' }}
+                            </div>
+                        </div>
+                    </div>
+                    @empty
+                    <div class="text-center py-8 text-gray-500">
+                        Belum ada catatan aktivitas log stok obat.
+                    </div>
+                    @endforelse
+                </div>
+            </div>
+
+            <div class="bg-gray-50 border-t border-gray-200 px-6 py-4 rounded-b-2xl flex-shrink-0 flex justify-end">
+                <button type="button" onclick="closeModal('modalLogStok')" class="px-6 py-2 bg-gray-600 text-white rounded-xl hover:bg-gray-700 transition-colors font-semibold shadow-md">
+                    Tutup
+                </button>
+            </div>
+        </div>
+    </div>
 
     {{-- Modal Tambah Obat Baru --}}
     <div id="modalAddObat" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4">
@@ -249,7 +317,7 @@
             </div>
             
             {{-- Form action disesuaikan dengan rute Anda (admin/petugas) --}}
-            <form id="formAddObat" action="{{ url('petugas/obat') }}" method="POST" class="p-6 space-y-4">
+            <form id="formAddObat" action="{{ url(request()->segment(1).'/obat') }}" method="POST" class="p-6 space-y-4">
                 @csrf
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
@@ -267,8 +335,13 @@
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-2">Satuan <span class="text-red-500">*</span></label>
-                        <input type="text" name="satuan" placeholder="Tablet / Botol / Strip" required value="{{ old('satuan') }}"
+                        <select name="satuan" required
                             class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all">
+                            <option value="">-- Pilih Satuan --</option>
+                            @foreach($masterSatuan as $sat)
+                                <option value="{{ $sat }}" @selected(old('satuan') == $sat)>{{ $sat }}</option>
+                            @endforeach
+                        </select>
                     </div>
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-2">Harga (Per Satuan) <span class="text-red-500">*</span></label>
@@ -343,8 +416,13 @@
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-2">Satuan <span class="text-red-500">*</span></label>
-                        <input type="text" id="edit_satuan" name="satuan" required
+                        <select id="edit_satuan" name="satuan" required
                             class="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all">
+                            <option value="">-- Pilih Satuan --</option>
+                            @foreach($masterSatuan as $sat)
+                                <option value="{{ $sat }}">{{ $sat }}</option>
+                            @endforeach
+                        </select>
                     </div>
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-2">Harga (Per Satuan) <span class="text-red-500">*</span></label>
@@ -446,7 +524,7 @@
             
             const form = document.getElementById('formEditObat');
             // Pastikan URL ini sesuai dengan rute Anda
-            form.action = "{{ url('petugas/obat') }}/" + data.id; 
+            form.action = "{{ url(request()->segment(1).'/obat') }}/" + data.id; 
             
             document.getElementById('edit_kode_obat').value = data.kode_obat;
             document.getElementById('edit_nama_obat').value = data.nama_obat;
@@ -464,7 +542,7 @@
             document.getElementById('delete_obat_info').textContent = info;
             const form = document.getElementById('formDeleteObat');
             // Pastikan URL ini sesuai dengan rute Anda
-            form.action = "{{ url('petugas/obat') }}/" + id; 
+            form.action = "{{ url(request()->segment(1).'/obat') }}/" + id; 
             openModal('modalDeleteObat');
         }
         
